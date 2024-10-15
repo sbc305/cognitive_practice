@@ -6,7 +6,7 @@ WORKDIR /usr/local/cognitive_app
 FROM base AS core-base
 COPY core ./core
 ENV PYTHONPATH="/usr/local/cognitive_app/core/"
-# RUN pip install --no-cache-dir --upgrade -r ./core/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r ./core/requirements.txt
 
 FROM core-base AS backend-base
 COPY backend ./backend
