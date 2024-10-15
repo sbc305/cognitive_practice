@@ -5,6 +5,7 @@ services:
     build: .
     ports:
       - "${PORT}:${PORT}"
+    env_file: ".back.env"
     environment:
       HOST: "${HOST}"
       PORT: "${PORT}"
