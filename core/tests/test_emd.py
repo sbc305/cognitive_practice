@@ -1,6 +1,9 @@
+import sys
+sys.path.append('../')
+
 import alg_modes
 import pandas as pd
-import emd
+import processing_algorithm
 
 
 data = pd.read_csv("../../data/data.csv")
@@ -27,6 +30,9 @@ for i in range(len(divided_data)):
     if i == 8:
         continue
 
-    emd_i = alg_modes.EMD(divided_data[i]['cte'])
-    print(i, alg_modes.deviation_interpretaion(alg_modes.compare_modes(emd_i)), alg_modes.compare_modes(emd_i))
+    #emd_i = alg_modes.EMD(divided_data[i]['cte'])
+    #print(i, alg_modes.deviation_interpretaion(alg_modes.compare_modes(emd_i)), alg_modes.compare_modes(emd_i))
+
+
+    print(processing_algorithm.calculate(divided_data[i]))
 
