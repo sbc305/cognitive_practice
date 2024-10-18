@@ -1,0 +1,4 @@
+sudo docker build -t backend_image ./
+sudo docker run -e HOST=0.0.0.0 -e PORT=9000 -it -p 9000:9000 backend_image
+
+sudo docker compose up
