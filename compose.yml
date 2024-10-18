@@ -1,11 +1,8 @@
-version: "0.1"
-
 services:
   web:
     build: .
     ports:
       - "${PORT}:${PORT}"
-    env_file: ".back.env"
     environment:
       HOST: "${HOST}"
       PORT: "${PORT}"
