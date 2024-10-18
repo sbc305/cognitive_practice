@@ -1,0 +1,13 @@
+services:
+  web:
+    build: .
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      HOST: "${HOST}"
+      PORT: "${PORT}"
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: ./
