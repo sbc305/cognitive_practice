@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import pandas as pd
 from pydantic import BaseModel
-
+from core.processing_algorithm import calculate
 class TimeStampData(BaseModel): # модель для обработки запроса по предоставлению данных по таймстемпам
     start: str # начальный таймстемп
     finish: str # конечный таймстемп
@@ -41,3 +41,9 @@ async def find_by_id(pass_data: IDData):
     if (id < 0 or id > 11):
         return "No such time period"
     return find_data(id_to_ts[id][0], id_to_ts[id][1]).to_dict(orient = "records")
+
+@app.post("/algo/")
+async def algo(pass_data: IDData):
+    id = pass_data.id
+    start, finish = id_to_ts[id]
+    return calculate(find_data(start, finish))

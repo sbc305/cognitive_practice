@@ -1,4 +1,4 @@
-import alg_modes
+from . import alg_modes
 import pandas as pd
 
 
