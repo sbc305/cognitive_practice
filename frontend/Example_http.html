@@ -17,17 +17,26 @@
 // Function to fetch data and plot the graph
 document.getElementById('plotButton').addEventListener('click', () => {
     const traceNumber = document.getElementById('traceInput').value; // Get user input
-    const url = 'YOUR_API_ENDPOINT'; // Replace with your actual API endpoint
+    const url = 'http://localhost:8000/data_by_id/'; // Replace with your actual API endpoint
 
-
+    const user = {
+        "id": 2
+    };
+    console.log(JSON.stringify(user))
     fetch(url, {
-        method: 'POST',
+        mode: 'no-cors',
+        method: "POST",
         headers: {
-            'Content-Type': 'application/json',
+            "Content-type": "application/json; charset=UTF-8",
         },
-        body: JSON.stringify({ traceNumber }) // Send the trace number in the request body
+        body: JSON.stringify(user) // Send the trace number in the request body
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
         const selectedTrace = data; // Assuming the response directly returns the trace data
 
@@ -36,11 +45,10 @@ document.getElementById('plotButton').addEventListener('click', () => {
                 x: selectedTrace.x, // Adjust according to your JSON structure
                 y: selectedTrace.y, // Adjust according to your JSON structure
                 type: 'scatter', // Change this to 'bar', 'pie', etc., as needed
-                name: selectedTrace.name || 'Unnamed Trace' // Optional name for the trace
             };
 
             const layout = {
-                title: `Graph for Trace ${traceNumber}`,
+                title: `Graph for Trace 2`,
                 xaxis: {
                     title: 'X-Axis Label'
                 },
