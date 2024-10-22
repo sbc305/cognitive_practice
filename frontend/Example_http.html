@@ -17,7 +17,7 @@
 // Function to fetch data and plot the graph
 document.getElementById('plotButton').addEventListener('click', () => {
     const traceNumber = document.getElementById('traceInput').value; // Get user input
-    const url = 'http://localhost:8000/data_by_id/'; // Replace with your actual API endpoint
+    const url = 'http://localhost:8000/data_by_id/'; // API endpoint
 
     const user = {
         "id": 2
@@ -42,9 +42,9 @@ document.getElementById('plotButton').addEventListener('click', () => {
 
         if (selectedTrace) {
             const trace = {
-                x: selectedTrace.x, // Adjust according to your JSON structure
-                y: selectedTrace.y, // Adjust according to your JSON structure
-                type: 'scatter', // Change this to 'bar', 'pie', etc., as needed
+                x: selectedTrace.x, 
+                y: selectedTrace.y, 
+                type: 'scatter',
             };
 
             const layout = {
@@ -57,7 +57,7 @@ document.getElementById('plotButton').addEventListener('click', () => {
                 }
             };
 
-            Plotly.newPlot('myDiv', [trace], layout); // Render the graph
+            Plotly.newPlot('myDiv', [trace], layout); 
         } else {
             alert('Trace not found!');
         }
