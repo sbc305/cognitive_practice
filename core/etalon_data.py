@@ -5,7 +5,7 @@ import pandas as pd
 def get_etalon_emd(column):
     data = pd.read_csv("data/data.csv")
     data["time"] = pd.to_datetime(data["ts"], format='mixed').dt.time
-    timestamps = pd.Series(["2024-08-21 09:26:38", "2024-08-21 09:27:48"])
+    timestamps = pd.Series(["2024-08-21 09:26:48", "2024-08-21 09:27:48"])
 
     timestamps = pd.DataFrame(timestamps, columns=["timestamps"])
     timestamps['time'] = pd.to_datetime(timestamps["timestamps"], format='mixed').dt.time
