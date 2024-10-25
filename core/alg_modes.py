@@ -5,8 +5,8 @@ import numpy as np
 from . import etalon_data
 
 
-def EMD(cte: pd.Series):
-    imf = emd.sift.sift(cte.to_numpy())
+def EMD(column: pd.Series):
+    imf = emd.sift.sift(column.to_numpy())
     return imf
 
 
