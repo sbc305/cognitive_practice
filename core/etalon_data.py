@@ -2,7 +2,7 @@ from . import alg_modes
 import pandas as pd
 
 
-def get_etalon_emd():
+def get_etalon_emd(column):
     data = pd.read_csv("data/data.csv")
     data["time"] = pd.to_datetime(data["ts"], format='mixed').dt.time
     timestamps = pd.Series(["2024-08-21 09:26:38", "2024-08-21 09:27:48"])
@@ -14,4 +14,4 @@ def get_etalon_emd():
     end = timestamps.at[1, "time"]
     piece_of_data = data[(end >= data["time"]) & (data['time'] >= start)]
 
-    return alg_modes.EMD(piece_of_data['cte'])
+    return alg_modes.EMD(piece_of_data[column])
