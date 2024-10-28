@@ -2,7 +2,7 @@ import pandas as pd
 import emd
 import numpy as np
 
-import etalon_data
+from . import etalon_data
 
 
 def EMD(cte: pd.Series):
