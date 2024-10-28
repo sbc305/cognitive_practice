@@ -2,6 +2,7 @@ from fastapi import FastAPI
 import pandas as pd
 from pydantic import BaseModel
 from core.processing_algorithm import calculate
+from fastapi.middleware.cors import CORSMiddleware
 class TimeStampData(BaseModel): # модель для обработки запроса по предоставлению данных по таймстемпам
     start: str # начальный таймстемп
     finish: str # конечный таймстемп
@@ -10,6 +11,14 @@ class IDData(BaseModel): # модель для предоставления да
     id: int # непосредственно ID файла, который нужно предоставить
 
 app = FastAPI() 
+origins = ["*"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 data = pd.read_csv("data.csv")
 data = data.fillna('')
 
