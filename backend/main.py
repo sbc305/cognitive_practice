@@ -1,10 +1,8 @@
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
 import pandas as pd
 from pydantic import BaseModel
-from fastapi import Request
-
+# from core.processing_algorithm import calculate
+from fastapi.middleware.cors import CORSMiddleware
 class TimeStampData(BaseModel): # модель для обработки запроса по предоставлению данных по таймстемпам
     start: str # начальный таймстемп
     finish: str # конечный таймстемп
@@ -13,6 +11,14 @@ class IDData(BaseModel): # модель для предоставления да
     id: int # непосредственно ID файла, который нужно предоставить
 
 app = FastAPI() 
+origins = ["*"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 data = pd.read_csv("data.csv")
 data = data.fillna('')
 
@@ -39,9 +45,14 @@ async def find_by_timestamp(pass_data: TimeStampData):
     return find_data(pass_data.start, pass_data.finish).to_dict(orient = "records")
 
 @app.post("/data_by_id/")
-async def find_by_id(request: Request):
-    id = await request.json()
-    id = int(id["id"])
+async def find_by_id(pass_data: IDData):
+    id = pass_data.id
     if (id < 0 or id > 11):
         return "No such time period"
-    return JSONResponse(content=jsonable_encoder(find_data(id_to_ts[id][0], id_to_ts[id][1]).to_dict(orient = "records")))
+    return find_data(id_to_ts[id][0], id_to_ts[id][1]).to_dict(orient = "records")
+
+# @app.post("/algo/")
+# async def algo(pass_data: IDData):
+#     id = pass_data.id
+#     start, finish = id_to_ts[id]
+#     return calculate(find_data(start, finish))

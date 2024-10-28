@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plotly Graph from JSON</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+
+<h2>Select Trace Number to Plot</h2>
+<input type="number" id="traceInput" placeholder="Enter trace number" min="0" max="9">
+<button id="plotButton">Plot Graph</button>
+<div id="myDiv" style="width: 100%; height: 100%;"></div>
+<div id="errorMessage" style="color: red;"></div>
+<script>
+// функция реализация http запроса и постройки графики
+document.getElementById('plotButton').addEventListener('click', () => {
+    const traceNumber = document.getElementById('traceInput').value; // номер трассы
+    const url = 'http://localhost:8000/data_by_id/'; 
+    const errorMessageDiv = document.getElementById('errorMessage');
+    // Проверяем, что номер трассы в допустимых пределах
+    if (traceNumber < 0 || traceNumber > 9) {
+        errorMessageDiv.innerText = 'Такой трассы нет. Введите номер от 0 до 9.';//пишем сообщение о не корректности данных
+        document.getElementById('myDiv').innerHTML = ''; // Очищаем график
+        return; // Прерываем выполнение функции
+    } else {
+        errorMessageDiv.innerText = ' '; // Очищаем сообщение об ошибке
+    }
+    const user = {
+        "id": traceNumber
+    };
+    console.log(JSON.stringify(user))
+    fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-type": "application/json; charset=UTF-8",
+        },
+        body: JSON.stringify(user) // Send the trace number in the request body
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }// проверка на пустоту
+        return response.json();
+    })
+    .then(data => {
+        // Извлекаем координаты x и y для построения графика
+        const x = data.map(point => point.x); 
+        const y = data.map(point => point.y); 
+
+        // Создаем след для графика
+        const trace = {
+            x: x,
+            y: y,
+            mode: 'lines+markers',
+            type: 'scatter',
+            name: `Трасса ${traceNumber}`
+        };
+
+        const layout = {
+            title: `График для трассы ${traceNumber}`,
+            xaxis: { title: 'X координаты' },
+            yaxis: { title: 'Y координаты' }
+        };
+
+        // Строим график из элементов в trace
+        Plotly.newPlot('myDiv', [trace], layout);
+    })
+    .catch(error => console.error('Error fetching the JSON:', error));//вывод ошибки
+});
+</script>
+
+</body>
+</html>
