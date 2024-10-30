@@ -1,12 +1,8 @@
-import sys
-sys.path.append('../')
-
-import alg_modes
 import pandas as pd
 import processing_algorithm
 
 
-data = pd.read_csv("../../data/data.csv")
+data = pd.read_csv("data/data.csv")
 data["time"] = pd.to_datetime(data["ts"], format='mixed').dt.time
 timestamps = pd.Series(["2024-08-21 09:26:38", "2024-08-21 09:27:48", "2024-08-21 09:41:00", '2024-08-21 09:42:10',
                         '2024-08-21 09:55:25', '2024-08-21 09:56:55', '2024-08-21 10:06:17', '2024-08-21 10:07:47',

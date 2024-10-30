@@ -1,5 +1,5 @@
 import pandas as pd
-import alg_modes
+from . import alg_modes
 
 
 def calculate(df: pd.DataFrame):

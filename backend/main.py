@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 import pandas as pd
 from pydantic import BaseModel
-
+from core.processing_algorithm import calculate
+from fastapi.middleware.cors import CORSMiddleware
 class TimeStampData(BaseModel): # модель для обработки запроса по предоставлению данных по таймстемпам
     start: str # начальный таймстемп
     finish: str # конечный таймстемп
@@ -10,7 +11,15 @@ class IDData(BaseModel): # модель для предоставления да
     id: int # непосредственно ID файла, который нужно предоставить
 
 app = FastAPI() 
-data = pd.read_csv("data.csv")
+origins = ["*"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+data = pd.read_csv("data/data.csv")
 data = data.fillna('')
 
 id_to_ts = {0: ["2024-08-21 09:26:38", "2024-08-21 09:27:48"], \
@@ -41,3 +50,9 @@ async def find_by_id(pass_data: IDData):
     if (id < 0 or id > 11):
         return "No such time period"
     return find_data(id_to_ts[id][0], id_to_ts[id][1]).to_dict(orient = "records")
+
+@app.post("/algo/")
+async def algo(pass_data: IDData):
+    id = pass_data.id
+    start, finish = id_to_ts[id]
+    return calculate(find_data(start, finish))

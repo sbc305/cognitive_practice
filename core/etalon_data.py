@@ -1,9 +1,9 @@
-import alg_modes
+from . import alg_modes
 import pandas as pd
 
 
 def get_etalon_emd():
-    data = pd.read_csv("../../data/data.csv")
+    data = pd.read_csv("data/data.csv")
     data["time"] = pd.to_datetime(data["ts"], format='mixed').dt.time
     timestamps = pd.Series(["2024-08-21 09:26:38", "2024-08-21 09:27:48"])
 
