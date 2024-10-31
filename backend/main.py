@@ -19,7 +19,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-data = pd.read_csv("data.csv")
+data = pd.read_csv("data/data.csv")
 data = data.fillna('')
 
 id_to_ts = {0: ["2024-08-21 09:26:38", "2024-08-21 09:27:48"], \
