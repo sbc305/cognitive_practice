@@ -1,5 +1,6 @@
 import pandas as pd
-import processing_algorithm
+from . import alg_modes
+from . import processing_algorithm
 
 
 data = pd.read_csv("data/data.csv")
@@ -26,9 +27,12 @@ for i in range(len(divided_data)):
     if i == 8:
         continue
 
-    #emd_i = alg_modes.EMD(divided_data[i]['cte'])
-    #print(i, alg_modes.deviation_interpretaion(alg_modes.compare_modes(emd_i)), alg_modes.compare_modes(emd_i))
-
-
-    print(processing_algorithm.calculate(divided_data[i]))
+    emd_i_cte = alg_modes.EMD(divided_data[i]['cte'])
+    emd_i_yaw_rate = alg_modes.EMD(divided_data[i]['yaw_rate'])
+    emd_i_speed = alg_modes.EMD(divided_data[i]['speed'])
+    
+    
+    print(i, processing_algorithm.calculate(divided_data[i]))
+    print(i, alg_modes.count_extremes(divided_data[i].cte.values), 
+          alg_modes.count_extremes(divided_data[i].yaw_rate.values), alg_modes.count_extremes(divided_data[i].speed.values))
 
