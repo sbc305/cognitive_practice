@@ -20,6 +20,15 @@ def compare_modes(empirical_modes: pd.Series, column):
     mode_count = min(etalon.shape[0], current.shape[0])
     return (current[:mode_count] - etalon[:mode_count]) / etalon[:mode_count]
 
+
+def count_extremes(x):
+    count = 0
+    for i in range(1, len(x) - 1):
+        if abs(x[i - 1]) <= abs(x[i]) and abs(x[i + 1]) < abs(x[i]):
+            count += 1
+    return count
+
+
 def deviation_interpretaion(deviation: np.array):
     if max(abs(deviation)) > 40:
         return "значительные виляния"
