@@ -32,9 +32,10 @@ def count_extremes(x):
 def deviation_interpretaion(deviation: np.array):
     if max(abs(deviation)) > 40:
         return "значительные виляния"
-    return "не выявлено значительных виляний"    return "не выявлено значительных виляний"
+    return "не выявлено значительных виляний" 
+
+  
 def calculate_value(df: pd.DataFrame, column):
-    #print(column)
     empirical_modes = EMD(df[column])
     deviation = compare_modes(empirical_modes, column)
     result = deviation_interpretaion(deviation)
