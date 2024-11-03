@@ -17,9 +17,9 @@ class ProcessingAlgorithm():
         etalon_data.get_etalon_extreme_count(self.columns)
         
         
-    def compare_modes(self, empirical_modes: pd.Series, column: str) -> np.array:
-        data = pd.read_csv("data/etalon_" + column + "_EMD.csv")
-        etalon = alg_modes.calculate_mean_square_sum(data.values)
+    def compare_mode_with_etalon(self, column: str) -> np.array:
+        etalon = alg_modes.calculate_mean_square_sum(self.get_EMD(column, True))
+        empirical_modes = self.get_EMD(column)
         current = alg_modes.calculate_mean_square_sum(empirical_modes)
         if current.shape[0] > etalon.shape[0]:
             np.append(etalon, np.zeros(etalon.shape[0],))
@@ -29,7 +29,11 @@ class ProcessingAlgorithm():
     
     
     def calculate(self, column: str) -> str:
-        empirical_modes = alg_modes.EMD(self.data[column])
-        deviation = self.compare_modes(empirical_modes, column)
+        deviation = self.compare_mode_with_etalon(column)
         result = alg_modes.deviation_interpretaion(deviation)
         return result
+    
+    def get_EMD(self, column: str, etalon=False):
+        if etalon:
+            return pd.read_csv("data/etalon_" + column + "_EMD.csv").values
+        return alg_modes.EMD(self.data[column])
