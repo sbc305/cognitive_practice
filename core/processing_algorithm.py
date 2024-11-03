@@ -28,12 +28,12 @@ class ProcessingAlgorithm():
         return (current[:mode_count] - etalon[:mode_count]) / etalon[:mode_count]
     
     
-    def calculate(self, column: str) -> str:
+    def calculate(self, column: str, limit: float=40) -> str:
         deviation = self.compare_mode_with_etalon(column)
-        result = alg_modes.deviation_interpretaion(deviation)
+        result = alg_modes.deviation_interpretaion(deviation, limit)
         return result
     
     def get_EMD(self, column: str, etalon=False):
         if etalon:
             return pd.read_csv("data/etalon_" + column + "_EMD.csv").values
-        return alg_modes.EMD(self.data[column])
+    

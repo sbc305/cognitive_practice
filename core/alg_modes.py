@@ -20,7 +20,7 @@ def count_extremes(x):
     return count
 
 
-def deviation_interpretaion(deviation: np.array, limit: float=40):
+def deviation_interpretaion(deviation: np.array, limit: float):
     if np.mean(abs(deviation)) > limit:
         return "значительные виляния"
     return "не выявлено значительных виляний" 
