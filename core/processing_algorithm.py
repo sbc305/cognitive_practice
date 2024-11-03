@@ -9,6 +9,7 @@ class ProcessingAlgorithm():
         self.data = data
         self.columns = columns
         self.set_etalon_data()
+        self.limits = dict()
     
     
     def set_etalon_data(self) -> None:
@@ -20,7 +21,10 @@ class ProcessingAlgorithm():
         data = pd.read_csv("data/etalon_" + column + "_EMD.csv")
         etalon = alg_modes.calculate_mean_square_sum(data.values)
         current = alg_modes.calculate_mean_square_sum(empirical_modes)
+        if current.shape[0] > etalon.shape[0]:
+            np.append(etalon, np.zeros(etalon.shape[0],))
         mode_count = min(etalon.shape[0], current.shape[0])
+        self.limits[column] = np.mean(abs(etalon))
         return (current[:mode_count] - etalon[:mode_count]) / etalon[:mode_count]
     
     
