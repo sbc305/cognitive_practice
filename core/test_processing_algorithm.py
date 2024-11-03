@@ -23,8 +23,10 @@ for i in range(0, timestamps.shape[0], 2):
     piece_of_data = data[(end >= data["time"]) & (data['time'] >= start)]
     divided_data.append(piece_of_data)
 
+print('cte yaw_rate speed')
 for i in range(len(divided_data)):
     if i == 8:
         continue
 
     pa = processing_algorithm.ProcessingAlgorithm(divided_data[i])
+    print(i, pa.calculate('cte'), pa.calculate('yaw_rate'), pa.calculate('speed'))
