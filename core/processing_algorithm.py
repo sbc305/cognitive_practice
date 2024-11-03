@@ -37,3 +37,8 @@ class ProcessingAlgorithm():
         if etalon:
             return pd.read_csv("data/etalon_" + column + "_EMD.csv").values
         return alg_modes.EMD(self.data[column])
+    
+    def get_extremes_count(self, column: str, etalon=False) -> int:
+        if etalon:
+            return pd.read_csv("data/etalon_extremes.csv").loc[0, column]
+        return alg_modes.count_extremes(self.data[column])

@@ -30,3 +30,4 @@ for i in range(len(divided_data)):
 
     pa = processing_algorithm.ProcessingAlgorithm(divided_data[i])
     print(i, pa.calculate('cte'), pa.calculate('yaw_rate'), pa.calculate('speed'))
+print(pa.get_extremes_count('cte', True))
