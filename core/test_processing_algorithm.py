@@ -23,16 +23,11 @@ for i in range(0, timestamps.shape[0], 2):
     piece_of_data = data[(end >= data["time"]) & (data['time'] >= start)]
     divided_data.append(piece_of_data)
 
+print('cte yaw_rate speed')
 for i in range(len(divided_data)):
     if i == 8:
         continue
 
-    emd_i_cte = alg_modes.EMD(divided_data[i]['cte'])
-    emd_i_yaw_rate = alg_modes.EMD(divided_data[i]['yaw_rate'])
-    emd_i_speed = alg_modes.EMD(divided_data[i]['speed'])
-    
-    
-    print(i, processing_algorithm.calculate(divided_data[i]))
-    print(i, alg_modes.count_extremes(divided_data[i].cte.values), 
-          alg_modes.count_extremes(divided_data[i].yaw_rate.values), alg_modes.count_extremes(divided_data[i].speed.values))
-
+    pa = processing_algorithm.ProcessingAlgorithm(divided_data[i])
+    print(i, pa.calculate('cte'), pa.calculate('yaw_rate'), pa.calculate('speed'))
+print(pa.get_extremes_count('cte', True))
