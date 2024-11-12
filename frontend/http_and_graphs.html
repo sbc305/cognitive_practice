@@ -13,7 +13,28 @@
     <h2>Выберите номер трассы для построения графика</h2>
     <input type="number" v-model="traceNumber" placeholder="Введите номер трассы" min="0" max="9">
     <button @click="plotGraph">Построить график</button>
-    <div id="myDiv" style="width: 100%; height: 100%;"></div>
+    <button @click="toggleView">{{ isGraphView ? 'Показать данные' : 'Показать график' }}</button>
+    
+    <div v-if="isGraphView" id="myDiv" style="width: 100%; height: 400px;"></div>
+    
+    <div v-if="!isGraphView">
+        <h3>Данные трассы {{ traceNumber }}</h3>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>X координаты</th>
+                    <th>Y координаты</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="point in dataPoints" :key="point.x">
+                    <td>{{ point.x }}</td>
+                    <td>{{ point.y }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
     <div id="errorMessage" style="color: red;">{{ errorMessage }}</div>
 </div>
 
@@ -22,7 +43,9 @@ new Vue({
     el: '#app',
     data: {
         traceNumber: null,
-        errorMessage: ''
+        errorMessage: '',
+        isGraphView: true,
+        dataPoints: []
     },
     methods: {
         plotGraph() {
@@ -32,7 +55,7 @@ new Vue({
             // Проверяем, что номер трассы в допустимых пределах
             if (this.traceNumber < 0 || this.traceNumber > 9) {
                 this.errorMessage = 'Такой трассы нет. Введите номер от 0 до 9.';
-                document.getElementById('myDiv').innerHTML = ''; // Очищаем график
+                this.dataPoints = []; // Очищаем данные
                 return; // Прерываем выполнение функции
             }
 
@@ -50,29 +73,36 @@ new Vue({
                 return response.json();
             })
             .then(data => {
-                const x = data.map(point => point.x);
-                const y = data.map(point => point.y);
-                
-                const trace = {
-                    x: x,
-                    y: y,
-                    mode: 'lines+markers',
-                    type: 'scatter',
-                    name: `Трасса ${this.traceNumber}`
-                };
-
-                const layout = {
-                    title: `График для трассы ${this.traceNumber}`,
-                    xaxis: { title: 'X координаты' },
-                    yaxis: { title: 'Y координаты' }
-                };
-
-                Plotly.newPlot('myDiv', [trace], layout);
+                this.dataPoints = data; // Сохраняем данные для таблицы
+                this.renderGraph(data); // Рисуем график с полученными данными
             })
             .catch(error => {
                 console.error('Ошибка при получении JSON:', error);
                 this.errorMessage = 'Произошла ошибка при загрузке данных.';
             });
+        },
+        renderGraph(data) {
+            const x = data.map(point => point.x);
+            const y = data.map(point => point.y);
+            
+            const trace = {
+                x: x,
+                y: y,
+                mode: 'lines+markers',
+                type: 'scatter',
+                name: `Трасса ${this.traceNumber}`
+            };
+
+            const layout = {
+                title: `График для трассы ${this.traceNumber}`,
+                xaxis: { title: 'X координаты' },
+                yaxis: { title: 'Y координаты' }
+            };
+
+            Plotly.newPlot('myDiv', [trace], layout);
+        },
+        toggleView() {
+            this.isGraphView = !this.isGraphView; // Переключаем режим отображения
         }
     }
 });
