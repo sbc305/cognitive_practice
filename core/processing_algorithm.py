@@ -5,7 +5,7 @@ from . import etalon_data
 
 
 class ProcessingAlgorithm():
-    def __init__(self, data: pd.DataFrame, columns=['cte', 'yaw_rate', 'speed']):
+    def __init__(self, data: pd.DataFrame, columns=['cte', 'yaw_rate', 'steer_fb']):
         self.data = data
         self.columns = columns
         self.set_etalon_data()
