@@ -3,8 +3,11 @@ import pandas as pd
 from pydantic import BaseModel
 from core.processing_algorithm import ProcessingAlgorithm
 from fastapi.middleware.cors import CORSMiddleware
+import timeit
+from datetime import datetime
+import os
+import json
 
-# import core.processing_algorithm
 from . import models
 
 app = FastAPI() 
@@ -33,7 +36,6 @@ id_to_ts = {0: ["2024-08-21 09:26:38", "2024-08-21 09:27:48"], \
             11: ['2024-08-21 12:56:45', '2024-08-21 13:04:15'] }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
     
 
-
 def find_data(start, finish):
     return data[(data["ts"] >= start) & (data["ts"] <= finish)]    
 
@@ -48,12 +50,57 @@ async def find_by_id(pass_data: models.IDData):
         return "No such time period"
     return find_data(id_to_ts[id][0], id_to_ts[id][1]).to_dict(orient = "records")
 
-@app.post("/algo/")
-async def algo(pass_data: models.IDData):
+# @app.post("/algo/", response_model=models.Record)
+# async def algo(pass_data: models.AlgoSetup) -> models.Record:
+#     arrival_time = datetime.now()
+#     id = pass_data.id
+#     param = pass_data.params['valued_by']
+#     start, finish = id_to_ts[id]
+#     start_time = timeit.default_timer()
+#     result = ProcessingAlgorithm(find_data(start, finish)).calculate(param)
+#     finish_time = timeit.default_timer()
+#     answer_time = datetime.now()
+#     proc_time = (finish_time - start_time) * 1000
+    # return [
+    #     {"algo_info": pass_data,
+    #      "arrival_time": arrival_time,
+    #      "proc_time": f"{proc_time:.2}, ms",
+    #      "answer_time": answer_time
+    #     #  "result": {"result": result}
+    #     }
+    # ]
+
+
+@app.post("/algo/", response_model=models.AlgoAnswer)
+async def algo(pass_data: models.AlgoSetup) -> models.AlgoAnswer:
+    request_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     id = pass_data.id
+    param = pass_data.params['valued_by']
     start, finish = id_to_ts[id]
-    return {
-        'yaw_rate': ProcessingAlgorithm(find_data(start, finish)).calculate('yaw_rate'),
-        'speed': ProcessingAlgorithm(find_data(start, finish)).calculate('speed'),
-        'cte': ProcessingAlgorithm(find_data(start, finish)).calculate('cte')
-    }
+    start_time = timeit.default_timer()
+    result = ProcessingAlgorithm(find_data(start, finish)).calculate(param)
+    algo_answer = models.AlgoAnswer(answer = result, artefacts = {})
+    finish_time = timeit.default_timer()
+    result_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+    count_time = f"{(finish_time - start_time) * 1000:.2} ms"
+    record = models.Record(algo_info = pass_data, arrival_time = request_time, proc_time = count_time, answer_time = result_time, result = algo_answer)
+    data = []
+    if os.path.exists('data/log.json'):
+        with open('data/log.json', 'r') as f:
+            file_content = f.read()
+            data = json.loads(file_content)
+    string = json.loads(record.model_dump_json())
+    data.append(string)
+    with open('data/log.json', 'w', encoding = 'utf-8') as f:
+        json.dump(data, f, ensure_ascii=False)
+    return algo_answer
+
+@app.post("/logs")
+async def logs():
+    if os.path.exists('data/log.json'):
+        with open('data/log.json', 'r') as f:
+            file_content = f.read()
+            data = json.loads(file_content)
+            return data   
+    else:
+        return "No logs for now!"
