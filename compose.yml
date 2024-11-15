@@ -1,5 +1,5 @@
 services:
-  web:
+  back:
     build: .
     ports:
       - "${PORT}:${PORT}"
@@ -9,5 +9,16 @@ services:
     develop:
       watch:
         - action: sync
-          path: .
+          path: ./
           target: ./
+  front:
+    build:
+      context: ./frontend/my_first_app
+      dockerfile: ./Dockerfile
+    ports:
+      - "8080:8080"
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend/my_first_app
+          target: ./frontend/my_first_app

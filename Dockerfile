@@ -1,4 +1,5 @@
-FROM python:3.9 AS base
+ARG PYTHON_IMG=python:3.9
+FROM $PYTHON_IMG AS base
 
 WORKDIR /usr/local/cognitive_app
 
@@ -19,6 +20,3 @@ ENV HOST=0.0.0.0
 ENV PORT=8000
 EXPOSE ${PORT}
 CMD ["sh", "-c", "uvicorn backend.main:app --reload --host $HOST --port $PORT"]
-
-# TODO
-# FROM base AS fronted-base
