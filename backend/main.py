@@ -1,14 +1,11 @@
 from fastapi import FastAPI
 import pandas as pd
 from pydantic import BaseModel
-from core.processing_algorithm import calculate
+from core.processing_algorithm import ProcessingAlgorithm
 from fastapi.middleware.cors import CORSMiddleware
-class TimeStampData(BaseModel): # модель для обработки запроса по предоставлению данных по таймстемпам
-    start: str # начальный таймстемп
-    finish: str # конечный таймстемп
 
-class IDData(BaseModel): # модель для предоставления данных по id
-    id: int # непосредственно ID файла, который нужно предоставить
+# import core.processing_algorithm
+from . import models
 
 app = FastAPI() 
 origins = ["*"]
@@ -41,18 +38,22 @@ def find_data(start, finish):
     return data[(data["ts"] >= start) & (data["ts"] <= finish)]    
 
 @app.post("/data_by_timestamps/")
-async def find_by_timestamp(pass_data: TimeStampData):
+async def find_by_timestamp(pass_data: models.TimeStampData):
     return find_data(pass_data.start, pass_data.finish).to_dict(orient = "records")
 
 @app.post("/data_by_id/")
-async def find_by_id(pass_data: IDData):
+async def find_by_id(pass_data: models.IDData):
     id = pass_data.id
     if (id < 0 or id > 11):
         return "No such time period"
     return find_data(id_to_ts[id][0], id_to_ts[id][1]).to_dict(orient = "records")
 
 @app.post("/algo/")
-async def algo(pass_data: IDData):
+async def algo(pass_data: models.IDData):
     id = pass_data.id
     start, finish = id_to_ts[id]
-    return calculate(find_data(start, finish))
+    return {
+        'yaw_rate': ProcessingAlgorithm(find_data(start, finish)).calculate('yaw_rate'),
+        'speed': ProcessingAlgorithm(find_data(start, finish)).calculate('speed'),
+        'cte': ProcessingAlgorithm(find_data(start, finish)).calculate('cte')
+    }
