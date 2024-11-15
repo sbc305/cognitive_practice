@@ -28,8 +28,3 @@ class Record(BaseModel):
     answer_time: str # время получения ответа
     result: AlgoAnswer # результат работы алгоритма
 
-
-# class AlgoResult(BaseModel): # модель для предоставления результатов работы алгоритма
-#     cte: str # результат для cte
-#     yaw_rate: str # результат для yaw_rate
-#     speed: str # результат для speed
