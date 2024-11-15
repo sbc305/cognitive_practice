@@ -50,35 +50,13 @@ async def find_by_id(pass_data: models.IDData):
         return "No such time period"
     return find_data(id_to_ts[id][0], id_to_ts[id][1]).to_dict(orient = "records")
 
-# @app.post("/algo/", response_model=models.Record)
-# async def algo(pass_data: models.AlgoSetup) -> models.Record:
-#     arrival_time = datetime.now()
-#     id = pass_data.id
-#     param = pass_data.params['valued_by']
-#     start, finish = id_to_ts[id]
-#     start_time = timeit.default_timer()
-#     result = ProcessingAlgorithm(find_data(start, finish)).calculate(param)
-#     finish_time = timeit.default_timer()
-#     answer_time = datetime.now()
-#     proc_time = (finish_time - start_time) * 1000
-    # return [
-    #     {"algo_info": pass_data,
-    #      "arrival_time": arrival_time,
-    #      "proc_time": f"{proc_time:.2}, ms",
-    #      "answer_time": answer_time
-    #     #  "result": {"result": result}
-    #     }
-    # ]
-
-
 @app.post("/algo/", response_model=models.AlgoAnswer)
 async def algo(pass_data: models.AlgoSetup) -> models.AlgoAnswer:
     request_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     id = pass_data.id
-    param = pass_data.params['valued_by']
     start, finish = id_to_ts[id]
     start_time = timeit.default_timer()
-    result = ProcessingAlgorithm(find_data(start, finish)).calculate(param)
+    result = ProcessingAlgorithm(find_data(start, finish)).calculate()
     algo_answer = models.AlgoAnswer(answer = result, artefacts = {})
     finish_time = timeit.default_timer()
     result_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
