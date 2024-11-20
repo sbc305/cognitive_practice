@@ -39,22 +39,32 @@ id_to_ts = {0: ["2024-08-21 09:26:38", "2024-08-21 09:27:48"], \
 def find_data(start, finish):
     return data[(data["ts"] >= start) & (data["ts"] <= finish)]    
 
-@app.post("/data_by_timestamps/")
-async def find_by_timestamp(pass_data: models.TimeStampData):
-    return find_data(pass_data.start, pass_data.finish).to_dict(orient = "records")
+@app.post("/data/")
+async def find_by_id(source_info: models.DataSourceModel):
+    pass_data = source_info.model_dump(exclude_none = True)
+    print(pass_data)
+    if ('file_id' in pass_data):
+        id = pass_data['file_id']
+        if (id < 0 or id > 11):
+            return "No such time period"
+        return find_data(id_to_ts[id][0], id_to_ts[id][1]).to_dict(orient = "records")
+    else:
+        start_ts = pass_data['start_time']
+        finish_ts = pass_data['finish_time']
+        return find_data(start_ts, finish_ts).to_dict(orient = "records")
 
-@app.post("/data_by_id/")
-async def find_by_id(pass_data: models.IDData):
-    id = pass_data.id
-    if (id < 0 or id > 11):
-        return "No such time period"
-    return find_data(id_to_ts[id][0], id_to_ts[id][1]).to_dict(orient = "records")
 
-@app.post("/algo/", response_model=models.AlgoAnswer)
+@app.post("/algo/", response_model = models.AlgoAnswer)
 async def algo(pass_data: models.AlgoSetup) -> models.AlgoAnswer:
     request_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-    id = pass_data.id
-    start, finish = id_to_ts[id]
+    start = "not provided"
+    finish = "not provided"
+    info_data = pass_data.source_info.model_dump(exclude_none = True)
+    if 'file_id' in info_data:
+        start, finish = id_to_ts[info_data['file_id']]
+    else:
+        start =  info_data['start_time']
+        finish = info_data['finish_time']
     start_time = timeit.default_timer()
     result = ProcessingAlgorithm(find_data(start, finish)).calculate()
     algo_answer = models.AlgoAnswer(answer = result, artefacts = {})
