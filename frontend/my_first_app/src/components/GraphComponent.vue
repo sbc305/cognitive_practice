@@ -1,14 +1,26 @@
 <template>
   <div>
-    <h2>Выберите номер трассы для построения графика</h2>
-    <input type="number" v-model="traceNumber" placeholder="Введите номер трассы" min="0" max="9" />
+    <h2>Выберите временной интервал для построения графика</h2>
+    
+    <div>
+      <label for="startTime">Начальное время (YYYY-MM-DD HH:mm:ss):</label>
+      <input type="text" v-model="startTime" placeholder="2024-08-21 09:26:38" />
+      <div v-if="startTimeError" style="color: red;">{{ startTimeError }}</div>
+    </div>
+    
+    <div>
+      <label for="finishTime">Конечное время (YYYY-MM-DD HH:mm:ss):</label>
+      <input type="text" v-model="finishTime" placeholder="2024-08-21 09:27:38" />
+      <div v-if="finishTimeError" style="color: red;">{{ finishTimeError }}</div>
+    </div>
+
     <button @click="plotGraph">Построить график</button>
     <button @click="toggleView">{{ isGraphView ? 'Показать данные' : 'Показать график' }}</button>
 
     <div v-if="isGraphView" id="myDiv" style="width: 100%; height: 400px;"></div>
 
     <div v-if="!isGraphView">
-      <h3>Данные трассы {{ traceNumber }}</h3>
+      <h3>Данные по выбранному интервалу</h3>
       <table border="1">
         <thead>
           <tr>
@@ -30,30 +42,65 @@
 </template>
 
 <script>
-import Plotly from 'plotly.js'; // Или 'plotly.js-dist', если вы установили этот пакет
+//библиотеки
+import Plotly from 'plotly.js'; 
 
 export default {
   data() {
     return {
-      traceNumber: null,
+      startTime: '',
+      finishTime: '',
+      startTimeError: '',
+      finishTimeError: '',
       errorMessage: '',
       isGraphView: true,
       dataPoints: []
     };
   },
   methods: {
-    plotGraph() {
-      const url = 'http://localhost:8000/data_by_id/'; // Укажите правильный URL
-      this.errorMessage = ''; // Сбрасываем сообщение об ошибке
-
-      // Проверяем, что номер трассы в допустимых пределах
-      if (this.traceNumber < 0 || this.traceNumber > 9) {
-        this.errorMessage = 'Такой трассы нет. Введите номер от 0 до 9.';
-        this.dataPoints = []; // Очищаем данные
-        return; // Прерываем выполнение функции
+    validateTimestamp(timestamp) {
+      const regex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+      if (!regex.test(timestamp)) {
+        return 'Неверный формат времени. Используйте YYYY-MM-DD HH:mm:ss.';
       }
 
-      const user = { "id": this.traceNumber };
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) {
+        return 'Неверная дата или время.';
+      }
+
+      return '';
+    },
+
+    validateTimes() {
+      this.startTimeError = this.validateTimestamp(this.startTime);
+      this.finishTimeError = this.validateTimestamp(this.finishTime);
+
+      // Проверка на то, что начальное время не больше конечного
+      if (!this.startTimeError && !this.finishTimeError) {
+        const startDate = new Date(this.startTime);
+        const finishDate = new Date(this.finishTime);
+        
+        if (startDate > finishDate) {
+          this.startTimeError = 'Начальное время не может быть больше конечного времени.';
+        }
+      }
+    },
+    
+    plotGraph() {
+      const url = 'http://localhost:8000/data/'; 
+      this.errorMessage = ''; // Сбрасываем сообщение об ошибке
+      this.validateTimes(); // Выполняем валидацию
+
+      // Проверяем наличие ошибок
+      if (this.startTimeError || this.finishTimeError) {
+        return; // Прерываем выполнение функции, если есть ошибки
+      }
+
+      const user = {
+        "start_time": this.startTime,
+        "finish_time": this.finishTime
+      };
 
       fetch(url, {
         method: "POST",
@@ -75,6 +122,7 @@ export default {
         this.errorMessage = 'Произошла ошибка при загрузке данных.';
       });
     },
+    
     renderGraph(data) {
       const x = data.map(point => point.x);
       const y = data.map(point => point.y);
@@ -84,17 +132,18 @@ export default {
         y: y,
         mode: 'lines+markers',
         type: 'scatter',
-        name: `Трасса ${this.traceNumber}`
+        name: `Данные с ${this.startTime} по ${this.finishTime}`
       };
 
       const layout = {
-        title: `График для трассы ${this.traceNumber}`,
+        title: `График с ${this.startTime} по ${this.finishTime}`,
         xaxis: { title: 'X координаты' },
         yaxis: { title: 'Y координаты' }
       };
 
       Plotly.newPlot('myDiv', [trace], layout);
     },
+    
     toggleView() {
       this.isGraphView = !this.isGraphView; // Переключаем режим отображения
     }
@@ -104,4 +153,7 @@ export default {
 
 <style scoped>
 
+input {
+  width: 200px;
+}
 </style>
