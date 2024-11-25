@@ -66,7 +66,7 @@ async def algo(pass_data: models.AlgoSetup) -> models.AlgoAnswer:
         start =  info_data['start_time']
         finish = info_data['finish_time']
     start_time = timeit.default_timer()
-    result = ProcessingAlgorithm(find_data(start, finish)).calculate()
+    result = ProcessingAlgorithm(find_data(start, finish), pass_data.valued_by).calculate()
     algo_answer = models.AlgoAnswer(answer = result, artefacts = {})
     finish_time = timeit.default_timer()
     result_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
@@ -92,3 +92,7 @@ async def logs():
             return data   
     else:
         return "No logs for now!"
+
+@app.post("/test/")
+async def algo(pass_data: models.AlgoSetup):
+    return pass_data

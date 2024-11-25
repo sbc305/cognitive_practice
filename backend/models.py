@@ -1,5 +1,5 @@
 from pydantic import BaseModel, model_validator, Field
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime
 
 class IDData(BaseModel): # модель для предоставления данных по id
@@ -23,7 +23,8 @@ class AlgoSetup(BaseModel): # модель для запуска алгорит�
     source_info: DataSourceModel # передаются таймстемпы или файл
     device_id: str # ID ТС
     algo_id: int # ID алгоритма, которым хотим считать
-    params: Dict[str, Any] # параметры алгоритма
+    valued_by: List[str] # параметры, по которым идёт оценка
+    limit: float # лимит в алгоритме
 
 
 class AlgoAnswer(BaseModel):
