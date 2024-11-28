@@ -28,11 +28,11 @@ class ProcessingAlgorithm():
         return (current[:mode_count] - etalon[:mode_count]) / etalon[:mode_count]
     
     
-    def calculate(self, limit: float=20) -> str:
+    def calculate(self, limit: float=6) -> str:
         deviation = 0
         for column in self.columns:
             deviation += np.mean(abs(self.compare_mode_with_etalon(column)))
-        result = alg_modes.deviation_interpretaion(deviation, limit)
+        result = alg_modes.deviation_interpretaion(deviation / len(self.columns), limit)
         if result:
             return 'Значительные виляния'
         return 'Не выявлено значительных виляний'
