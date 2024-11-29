@@ -19,8 +19,9 @@ class ProcessingAlgorithm():
         self.set_exteme_count()
         
         
-    def compare_mode_with_etalon(self, column: str) -> np.array:  
-        return np.mean(np.max(correlate(self.etalon_modes[column], self.current_modes[column]), axis=0))
+    def compare_mode_with_etalon(self, column: str) -> np.array: 
+        # averaging correlation maxima across all modes
+        return np.mean(np.max(np.abs(correlate(self.etalon_modes[column], self.current_modes[column])), axis=0))
     
     
     def calculate(self, limit: float=0.1) -> str:
