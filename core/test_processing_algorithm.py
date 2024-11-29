@@ -22,11 +22,21 @@ for i in range(0, timestamps.shape[0], 2):
     end = timestamps.at[i + 1, "time"]
     piece_of_data = data[(end >= data["time"]) & (data['time'] >= start)]
     divided_data.append(piece_of_data)
+    
+data = pd.read_csv("data/data.csv")
+data["time"] = pd.to_datetime(data["ts"], format='mixed').dt.time
+timestamps = pd.Series(["2024-08-21 09:26:38", "2024-08-21 09:27:48"])
+
+timestamps = pd.DataFrame(timestamps, columns=["timestamps"])
+timestamps['time'] = pd.to_datetime(timestamps["timestamps"], format='mixed').dt.time
+
+start = timestamps.at[0, "time"]
+end = timestamps.at[1, "time"]
+piece_of_data_etalon = data[(end >= data["time"]) & (data['time'] >= start)]
 
 for i in range(len(divided_data)):
     if i == 8:
         continue
 
-    pa = processing_algorithm.ProcessingAlgorithm(divided_data[i])
-    print(i, pa.calculate())
-print(pa.get_extremes_count('cte', True))
+    pa = processing_algorithm.ProcessingAlgorithm(divided_data[i], piece_of_data_etalon, [0])
+    print(i, pa.calculate(0.2))
