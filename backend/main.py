@@ -1,6 +1,6 @@
-from fastapi import FastAPI
-import pandas as pd
-from pydantic import BaseModel
+from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from core.processing_algorithm import ProcessingAlgorithm
 from fastapi.middleware.cors import CORSMiddleware
 import timeit
@@ -26,8 +26,6 @@ async def find(source_info: models.DataSourceModel):
     pass_data = source_info.model_dump(exclude_none = True)
     if ('file_id' in pass_data):
         id = pass_data['file_id']
-        if (id < 0 or id > 11):
-            return "No such time period"
         return dm.find_data_by_id(id).to_dict(orient = "records")
     else:
         start_ts = pass_data['start_time']
@@ -71,5 +69,20 @@ async def logs():
             data = json.loads(file_content)
             return data   
     else:
-        return "No logs for now!"
+        raise HTTPException(status_code=404, detail="No logs for now!")
 
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=400,
+        content={
+            "detail": [
+                {
+                    "type": "validation_error",
+                    "loc": exc.errors()[0]['loc'],
+                    "msg": exc.errors()[0]['msg'],
+                    "input": exc.errors()[0]['input']
+                }
+            ]
+        }
+    )
