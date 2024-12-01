@@ -23,13 +23,17 @@
 
     <div v-else>
       <h2>Выберите номер трассы для построения графика</h2>
-      <input type="number" v-model="traceNumber" placeholder="Введите номер трассы" min="0" max="9" />
+      <input type="number" v-model="traceNumber" placeholder="Введите номер трассы" min="0" max="11" />
       <button @click="plotGraphById">Построить график</button>
     </div>
 
+    <!-- Сообщение о загрузке -->
+    <div v-if="isLoading" style="color: blue;">Обработка данных, пожалуйста подождите...</div>
+
+    <!-- Кнопка для переключения между графиком и данными -->
     <button @click="toggleView">{{ isGraphView ? 'Показать данные' : 'Показать график' }}</button>
 
-    <!-- Изначально отображаем график -->
+    <!-- Отображаем график -->
     <div id="myDiv" style="width: 100%; height: 400px;" v-if="isGraphView"></div>
 
     <!-- Отображаем данные, если не график -->
@@ -51,6 +55,7 @@
       </table>
     </div>
 
+    <!-- Сообщение об ошибке -->
     <div id="errorMessage" style="color: red;">{{ errorMessage }}</div>
   </div>
 </template>
@@ -70,7 +75,9 @@ export default {
       isGraphView: true, // Изначально показываем график
       isTimeInput: true, // Начинаем с режима ввода времени
       traceNumber: null,
-      dataPoints: []
+      dataPoints: [],
+      isLoading: false, // состояние для отображения загрузки
+      graphTitle: '' // Заголовок графика
     };
   },
   methods: {
@@ -116,6 +123,8 @@ export default {
         "finish_time": this.finishTime
       };
 
+      this.isLoading = true; // Устанавливаем состояние загрузки
+
       fetch(url, {
         method: "POST",
         headers: {
@@ -124,32 +133,41 @@ export default {
         body: JSON.stringify(user)
       })
       .then(response => {
-        if (!response.ok) throw new Error('Сетевая ошибка: ответ не был успешным');
-        return response.json();
-      })
-      .then(data => {
-        this.dataPoints = data;
-        this.renderGraph(data);
+        if (!response.ok) { 
+          return response.json().then(err => { // Считываем сообщение об ошибке из ответа
+            throw new Error(err.message || 'Ошибка при обработке запроса.');
+          });
+        }
         
-        // Сбрасываем режим отображения на график после получения данных
-        this.isGraphView = true;
+        return response.json();
+       })
+       .then(data => {
+         this.dataPoints = data;
+         this.isGraphView = true;
+         this.graphTitle = `График с ${this.startTime} по ${this.finishTime}`; // Устанавливаем заголовок графика
+         this.renderGraph(data); // Рисуем график сразу после получения данных
        })
        .catch(error => {
          console.error('Ошибка при получении JSON:', error);
-         this.errorMessage = 'Произошла ошибка при загрузке данных.';
+         this.errorMessage = error.message; // Устанавливаем сообщение об ошибке
+       })
+       .finally(() => {
+         this.isLoading = false; // Сбрасываем состояние загрузки
        });
     },
 
     plotGraphById() {
       const url = 'http://localhost:8000/data/';
       
-      if (this.traceNumber < 0 || this.traceNumber > 9) {
-        this.errorMessage = 'Такой трассы нет. Введите номер от 0 до 9.';
+      if (this.traceNumber < 0 || this.traceNumber > 11) {
+        this.errorMessage = 'Такой трассы нет. Введите номер от 0 до 11.';
         this.dataPoints = [];
         return;
       }
 
       const user = { "file_id": this.traceNumber };
+
+      this.isLoading = true; // Устанавливаем состояние загрузки
 
       fetch(url, {
         method: "POST",
@@ -159,19 +177,26 @@ export default {
         body: JSON.stringify(user)
       })
       .then(response => {
-        if (!response.ok) throw new Error('Сетевая ошибка: ответ не был успешным');
-        return response.json();
-      })
-      .then(data => {
-        this.dataPoints = data;
-        this.renderGraph(data);
+        if (!response.ok) { 
+          return response.json().then(err => { // Считываем сообщение об ошибке из ответа
+            throw new Error(err.message || 'Ошибка при обработке запроса.');
+          });
+        }
         
-        // Сбрасываем режим отображения на график после получения данных
-        this.isGraphView = true;
+        return response.json();
+       })
+       .then(data => {
+         this.dataPoints = data;
+         this.isGraphView = true; 
+         this.graphTitle = `График ID ${this.traceNumber}`; // Устанавливаем заголовок графика
+         this.renderGraph(data); // Рисуем график сразу после получения данных
        })
        .catch(error => {
          console.error('Ошибка при получении JSON:', error);
-         this.errorMessage = 'Произошла ошибка при загрузке данных.';
+         this.errorMessage = error.message; // Устанавливаем сообщение об ошибке
+       })
+       .finally(() => {
+         this.isLoading = false; // Сбрасываем состояние загрузки
        });
     },
 
@@ -188,7 +213,7 @@ export default {
        };
 
        const layout = {
-         title: `График`,
+         title: this.graphTitle, // Используем заголовок графика из переменной
          xaxis: { title: 'X координаты' },
          yaxis: { title: 'Y координаты' }
        };
@@ -197,7 +222,13 @@ export default {
      },
 
      toggleView() {
-       this.isGraphView = !this.isGraphView; // Переключаем режим отображения
+       // Переключаем режим отображения
+       this.isGraphView = !this.isGraphView;
+
+       // Если переключаемся на график, перерисовываем его
+       if (this.isGraphView && this.dataPoints.length > 0) {
+         this.renderGraph(this.dataPoints);
+       }
      },
 
      toggleInputMode() {
