@@ -8,19 +8,13 @@ def EMD(column: pd.Series):
     return imf
 
 
-def calculate_mean_square_sum(x: np.array):
-    return sum([i * i for i in x]) / len(x)
-
-
-def count_extremes(x):
-    count = 0
-    for i in range(1, len(x) - 1):
-        if abs(x[i - 1]) <= abs(x[i]) and abs(x[i + 1]) < abs(x[i]):
-            count += 1
+def count_extremes(x: np.ndarray) -> int:
+    count = len(emd.sift.get_padded_extrema(x)[0])
     return count
 
 
-def deviation_interpretaion(deviation: np.array, limit: float):
-    if np.mean(abs(deviation)) > limit:
+def similarity_interpretaion(similarity: float, limit: float):
+    # TODO: write more difficult interpretation
+    if similarity < limit:
         return True
     return False

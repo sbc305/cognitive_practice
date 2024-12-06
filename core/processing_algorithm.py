@@ -1,48 +1,55 @@
 import pandas as pd
 import numpy as np
+from scipy.signal import correlate
 from . import alg_modes
-from . import etalon_data
 
 
 class ProcessingAlgorithm():
-    def __init__(self, data: pd.DataFrame, columns=['cte', 'yaw_rate', 'steer_fb']):
+    def __init__(self, data: pd.DataFrame, etalon_data: pd.DataFrame,
+                 modes=[], columns=['cte', 'yaw_rate']):
         self.data = data
+        self.etalon_data = etalon_data
         self.columns = columns
-        self.set_etalon_data()
-        self.limits = dict()
-    
-    
-    def set_etalon_data(self) -> None:
-        etalon_data.get_etalon_emd(self.columns)
-        etalon_data.get_etalon_extreme_count(self.columns)
+        self.etalon_modes = dict()
+        self.current_modes = dict()
+        self.modes = modes
+        self.extremes = dict()
+        self.etalon_extremes = dict()
+        self.set_EMD()
+        self.set_exteme_count()
         
         
-    def compare_mode_with_etalon(self, column: str) -> np.array:
-        etalon = alg_modes.calculate_mean_square_sum(self.get_EMD(column, True))
-        empirical_modes = self.get_EMD(column)
-        current = alg_modes.calculate_mean_square_sum(empirical_modes)
-        if current.shape[0] > etalon.shape[0]:
-            np.append(etalon, np.zeros(etalon.shape[0],))
-        mode_count = min(etalon.shape[0], current.shape[0])
-        self.limits[column] = np.mean(abs(etalon))
-        return (current[:mode_count] - etalon[:mode_count]) / etalon[:mode_count]
+    def compare_mode_with_etalon(self, column: str) -> np.array: 
+        # averaging correlation maxima across all modes
+        energy_etalon = np.sum(self.etalon_modes[column] ** 2, axis=0)
+        energy_current = np.sum(self.current_modes[column] ** 2, axis=0)
+        correlation = correlate(self.etalon_modes[column] / energy_etalon, 
+                                self.current_modes[column] / energy_current)
+        return np.mean(np.max(np.abs(correlation), axis=0))
     
     
-    def calculate(self, limit: float=20) -> str:
-        deviation = 0
+    def calculate(self, limit: float=2) -> str:
+        similarity = 0
         for column in self.columns:
-            deviation += np.mean(abs(self.compare_mode_with_etalon(column)))
-        result = alg_modes.deviation_interpretaion(deviation, limit)
+            similarity += self.compare_mode_with_etalon(column)
+        result = alg_modes.similarity_interpretaion(similarity / len(self.columns), limit)        
         if result:
             return 'Значительные виляния'
         return 'Не выявлено значительных виляний'
     
-    def get_EMD(self, column: str, etalon=False):
-        if etalon:
-            return pd.read_csv("data/etalon_" + column + "_EMD.csv").values
-        return alg_modes.EMD(self.data[column])
-    
-    def get_extremes_count(self, column: str, etalon=False) -> int:
-        if etalon:
-            return pd.read_csv("data/etalon_extremes.csv").loc[0, column]
-        return alg_modes.count_extremes(self.data[column])
+    def set_EMD(self) -> None:
+        for column in self.columns:
+            EMDs = alg_modes.EMD(self.data[column])
+            etalon_EMDs = alg_modes.EMD(self.etalon_data[column])
+            if len(self.modes) == 0:
+                self.current_modes[column] = EMDs
+                self.etalon_modes[column] = etalon_EMDs
+            else:
+                self.current_modes[column] = EMDs[:, self.modes]
+                self.etalon_modes[column] = etalon_EMDs[:, self.modes]
+                
+                
+    def set_exteme_count(self) -> None:
+        for column in self.columns:
+            self.extremes[column] = alg_modes.count_extremes(self.data[column].to_numpy())
+            self.etalon_extremes[column] = alg_modes.count_extremes(self.etalon_data[column].to_numpy())
