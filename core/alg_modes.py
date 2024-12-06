@@ -15,6 +15,6 @@ def count_extremes(x: np.ndarray) -> int:
 
 def similarity_interpretaion(similarity: float, limit: float):
     # TODO: write more difficult interpretation
-    if similarity > limit:
+    if similarity < limit:
         return True
     return False

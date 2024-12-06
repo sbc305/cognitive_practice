@@ -39,4 +39,4 @@ for i in range(len(divided_data)):
         continue
 
     pa = processing_algorithm.ProcessingAlgorithm(divided_data[i], piece_of_data_etalon, [0])
-    print(i, pa.calculate(0.2))
+    print(i, pa.calculate())
