@@ -21,14 +21,14 @@ class ProcessingAlgorithm():
         
     def compare_mode_with_etalon(self, column: str) -> np.array: 
         # averaging correlation maxima across all modes
-        energy_etalon = np.sum(self.etalon_modes[column] ** 2, axis=0)
-        energy_current = np.sum(self.current_modes[column] ** 2, axis=0)
+        energy_etalon = np.sum(self.etalon_modes[column] ** 2, axis=1)
+        energy_current = np.sum(self.current_modes[column] ** 2, axis=1)
         correlation = correlate(self.etalon_modes[column] / energy_etalon, 
                                 self.current_modes[column] / energy_current)
         return np.mean(np.max(np.abs(correlation), axis=0))
     
     
-    def calculate(self, limit: float=2) -> str:
+    def calculate(self, limit: float=0.2) -> str:
         similarity = 0
         for column in self.columns:
             similarity += self.compare_mode_with_etalon(column)
@@ -42,11 +42,11 @@ class ProcessingAlgorithm():
             EMDs = alg_modes.EMD(self.data[column])
             etalon_EMDs = alg_modes.EMD(self.etalon_data[column])
             if len(self.modes) == 0:
-                self.current_modes[column] = EMDs
-                self.etalon_modes[column] = etalon_EMDs
+                self.current_modes[column] = EMDs.T
+                self.etalon_modes[column] = etalon_EMDs.T
             else:
-                self.current_modes[column] = EMDs[:, self.modes]
-                self.etalon_modes[column] = etalon_EMDs[:, self.modes]
+                self.current_modes[column] = (EMDs[:, self.modes]).T
+                self.etalon_modes[column] = (etalon_EMDs[:, self.modes]).T
                 
                 
     def set_exteme_count(self) -> None:
