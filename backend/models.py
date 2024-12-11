@@ -1,6 +1,6 @@
 from pydantic import BaseModel, model_validator, Field
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+
 
 class BaseConfigModel(BaseModel):
     class Config:
@@ -40,7 +40,12 @@ class AlgoSetup(BaseConfigModel): # модель для запуска алго�
 
 class AlgoAnswer(BaseConfigModel):
     answer: str # ответ алгоритма
-    artefacts: Dict[str, Any] # артефакты работы алгоритма
+    columns: List[str] # список колонок для оценки
+    etalon_modes:Dict[str, List[List[float]]] # эталонные моды
+    current_modes:Dict[str, List[List[float]]] # моды на текущих данных
+    extremes: Dict[str, int] # количество экстремумов на текущих данных
+    etalon_extremes: Dict[str, int] # количество экстремумов на эталонном наборе
+    modes: List[str] # моды
 
 class Record(BaseConfigModel):
     algo_info: AlgoSetup # информация об алгоритме, которым производился обсчёт
