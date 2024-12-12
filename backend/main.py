@@ -19,11 +19,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-dm = DataManager("data/data.csv")
 
 @app.post("/data/")
 async def find(source_info: models.DataSourceModel):
     pass_data = source_info.model_dump(exclude_none = True)
+    dm = ''
+    if (pass_data["device_id"] == "test"):
+        dm = DataManager("data/data.csv")
+    else:
+        dm = DataManager(f"data/input_samples/{pass_data.device_id}.csv")
     if ('file_id' in pass_data):
         id = pass_data['file_id']
         return dm.find_data_by_id(id).to_dict(orient = "records")
@@ -33,19 +37,24 @@ async def find(source_info: models.DataSourceModel):
         return dm.find_data(start_ts, finish_ts).to_dict(orient = "records")
 
 
-@app.post("/algo/")
-# @app.post("/algo/", response_model = models.AlgoAnswer)
-# async def algo(pass_data: models.AlgoSetup) -> models.AlgoAnswer:
-async def algo(pass_data: models.AlgoSetup):
+# @app.post("/algo/")
+@app.post("/algo/", response_model = models.AlgoAnswer)
+async def algo(pass_data: models.AlgoSetup) -> models.AlgoAnswer:
+# async def algo(pass_data: models.AlgoSetup):
     request_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     start = "not provided"
     finish = "not provided"
     info_data = pass_data.source_info.model_dump(exclude_none = True)
     proc_alg = ""
-    if 'file_id' in info_data:
-        proc_alg = ProcessingAlgorithm(data = dm.find_data_by_id(info_data["file_id"]), etalon_data = dm.data)
+    if (info_data["device_id"] == "test"):
+        dm = DataManager("data/data.csv")
+        if 'file_id' in info_data:
+            proc_alg = ProcessingAlgorithm(data = dm.find_data_by_id(info_data["file_id"]), etalon_data = dm.data)
+        else:
+            proc_alg = ProcessingAlgorithm(data = dm.find_data(info_data['start_time'], info_data['finish_time']), etalon_data = dm.find_data_by_id(id = 0), columns = pass_data.valued_by)
     else:
-        proc_alg = ProcessingAlgorithm(data = dm.find_data(info_data['start_time'], info_data['finish_time']), etalon_data = dm.data, columns = pass_data.valued_by)
+        dm = DataManager(f"data/input_samples/{info_data.device_id}.csv")
+        proc_alg = proc_alg = ProcessingAlgorithm(data = dm.find_data(info_data['start_time'], info_data['finish_time']), etalon_data = dm.data, columns = pass_data.valued_by)
     start_time = timeit.default_timer()
     etalon_modes_conv = {key: value.tolist() for key, value in proc_alg.etalon_modes.items()}
     current_modes_conv = {key: value.tolist() for key, value in proc_alg.current_modes.items()}
@@ -91,6 +100,3 @@ async def validation_exception_handler(request, exc):
         }
     )
 
-# @app.post("/test")
-# async def test(pass_data: models.AlgoAnswer):
-#     print(pass_data.artefacts)    
