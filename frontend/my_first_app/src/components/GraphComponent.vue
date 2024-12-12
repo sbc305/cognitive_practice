@@ -72,12 +72,12 @@ export default {
       startTimeError: '',
       finishTimeError: '',
       errorMessage: '',
-      isGraphView: true, // Изначально показываем график
-      isTimeInput: true, // Начинаем с режима ввода времени
+      isGraphView: true,
+      isTimeInput: true,
       traceNumber: null,
       dataPoints: [],
-      isLoading: false, // состояние для отображения загрузки
-      graphTitle: '' // Заголовок графика
+      isLoading: false,
+      graphTitle: ''
     };
   },
   methods: {
@@ -123,7 +123,7 @@ export default {
         "finish_time": this.finishTime
       };
 
-      this.isLoading = true; // Устанавливаем состояние загрузки
+      this.isLoading = true;
 
       fetch(url, {
         method: "POST",
@@ -134,7 +134,7 @@ export default {
       })
       .then(response => {
         if (!response.ok) { 
-          return response.json().then(err => { // Считываем сообщение об ошибке из ответа
+          return response.json().then(err => { 
             throw new Error(err.message || 'Ошибка при обработке запроса.');
           });
         }
@@ -144,15 +144,15 @@ export default {
        .then(data => {
          this.dataPoints = data;
          this.isGraphView = true;
-         this.graphTitle = `График с ${this.startTime} по ${this.finishTime}`; // Устанавливаем заголовок графика
-         this.renderGraph(data); // Рисуем график сразу после получения данных
+         this.graphTitle = `График с ${this.startTime} по ${this.finishTime}`;
+         this.renderGraph(data);
        })
        .catch(error => {
          console.error('Ошибка при получении JSON:', error);
-         this.errorMessage = error.message; // Устанавливаем сообщение об ошибке
+         this.errorMessage = error.message;
        })
        .finally(() => {
-         this.isLoading = false; // Сбрасываем состояние загрузки
+         this.isLoading = false;
        });
     },
 
@@ -167,7 +167,7 @@ export default {
 
       const user = { "file_id": this.traceNumber };
 
-      this.isLoading = true; // Устанавливаем состояние загрузки
+      this.isLoading = true;
 
       fetch(url, {
         method: "POST",
@@ -176,49 +176,58 @@ export default {
         },
         body: JSON.stringify(user)
       })
-      .then(response => {
-        if (!response.ok) { 
-          return response.json().then(err => { // Считываем сообщение об ошибке из ответа
-            throw new Error(err.message || 'Ошибка при обработке запроса.');
-          });
-        }
-        
-        return response.json();
+       .then(response => {
+         if (!response.ok) { 
+           return response.json().then(err => { 
+             throw new Error(err.message || 'Ошибка при обработке запроса.');
+           });
+         }
+         
+         return response.json();
        })
        .then(data => {
          this.dataPoints = data;
          this.isGraphView = true; 
-         this.graphTitle = `График ID ${this.traceNumber}`; // Устанавливаем заголовок графика
-         this.renderGraph(data); // Рисуем график сразу после получения данных
+         this.graphTitle = `График ID ${this.traceNumber}`;
+         this.renderGraph(data);
        })
        .catch(error => {
          console.error('Ошибка при получении JSON:', error);
-         this.errorMessage = error.message; // Устанавливаем сообщение об ошибке
+         this.errorMessage = error.message;
        })
        .finally(() => {
-         this.isLoading = false; // Сбрасываем состояние загрузки
+         this.isLoading = false;
        });
     },
 
     renderGraph(data) {
-       const x = data.map(point => point.x);
-       const y = data.map(point => point.y);
+       // Используем nextTick для гарантии обновления DOM
+       this.$nextTick(() => {
+         const x = data.map(point => point.x);
+         const y = data.map(point => point.y);
 
-       const trace = {
-         x: x,
-         y: y,
-         mode: 'lines+markers',
-         type: 'scatter',
-         name: `Данные`
-       };
+         const trace = {
+           x: x,
+           y: y,
+           mode: 'lines+markers',
+           type: 'scatter',
+           name: `Данные`
+         };
 
-       const layout = {
-         title: this.graphTitle, // Используем заголовок графика из переменной
-         xaxis: { title: 'X координаты' },
-         yaxis: { title: 'Y координаты' }
-       };
+         const layout = {
+           title: this.graphTitle,
+           xaxis: { title: 'X координаты' },
+           yaxis: { title: 'Y координаты' }
+         };
 
-       Plotly.newPlot('myDiv', [trace], layout);
+         // Проверяем наличие элемента перед вызовом newPlot
+         const graphDiv = document.getElementById('myDiv');
+         if (graphDiv) {
+           Plotly.newPlot(graphDiv, [trace], layout);
+         } else {
+           console.error("Элемент с id 'myDiv' не найден.");
+         }
+       });
      },
 
      toggleView() {
@@ -227,12 +236,14 @@ export default {
 
        // Если переключаемся на график, перерисовываем его
        if (this.isGraphView && this.dataPoints.length > 0) {
-         this.renderGraph(this.dataPoints);
+         this.renderGraph(this.dataPoints); // Перерисовываем график
        }
      },
 
      toggleInputMode() {
-       this.isTimeInput = !this.isTimeInput; // Переключаем режим ввода
+       // Переключаем режим ввода
+       this.isTimeInput = !this.isTimeInput; 
+       
        // Сбрасываем ошибки и данные при переключении
        this.startTime = '';
        this.finishTime = '';
