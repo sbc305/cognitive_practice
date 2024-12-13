@@ -17,6 +17,7 @@ class ProcessingAlgorithm():
         self.extremes = dict()
         self.etalon_extremes = dict()
         self.wagging = dict()
+        self.modes_wagging = dict()
         self.set_EMD()
         self.set_extemes()
         self.find_wagging()
@@ -67,7 +68,16 @@ class ProcessingAlgorithm():
                     break
                 extremes.append(temp.T[np.argmax(temp[1, :], axis=0)])
             extremes = np.array(extremes)
+            for i in range(extremes.shape[0]):
+                if extremes[i][0] < 0 and len(self.current_modes[column]) > 0:
+                    extremes[i][0] += self.current_modes[column][0].shape[0]
             index = int(extremes[np.argmax(extremes.T[1, :], axis=0)][0])
-            self.wagging[column] = self.data.iloc[max(index-10, 0):min(index+10, self.data.shape[1])]
+            self.wagging[column] = self.data.iloc[max(index-10, 0):min(index+10, self.data.shape[0])]
+            self.modes_wagging[column] = [self.current_modes
+                                          [column]
+                                          [i]
+                                          [max(int(index)-10, 0):min(int(index)+10, self.current_modes[column][i].shape[0])]
+                                          for i, index in 
+                                          zip(range(self.current_modes[column].shape[0]), extremes[:, 0])]
 
                 
