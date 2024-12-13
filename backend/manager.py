@@ -2,7 +2,7 @@ import pandas as pd
 
 class DataManager():
     def __init__(self, source: str):
-        self.data = pd.read_csv("data/data.csv")
+        self.data = pd.read_csv(source)
         self.data = self.data.fillna('')
 
     def find_data(self, start, finish):

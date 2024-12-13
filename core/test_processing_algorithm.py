@@ -38,5 +38,5 @@ for i in range(len(divided_data)):
     if i == 8:
         continue
 
-    pa = processing_algorithm.ProcessingAlgorithm(divided_data[i], piece_of_data_etalon, [0])
+    pa = processing_algorithm.ProcessingAlgorithm(divided_data[i], piece_of_data_etalon)
     print(i, pa.calculate())
