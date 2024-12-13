@@ -16,8 +16,10 @@ class ProcessingAlgorithm():
         self.modes = modes
         self.extremes = dict()
         self.etalon_extremes = dict()
+        self.wagging = dict()
         self.set_EMD()
         self.set_extemes()
+        self.find_wagging()
         
         
     def compare_mode_with_etalon(self, column: str) -> np.array: 
@@ -54,3 +56,18 @@ class ProcessingAlgorithm():
         for column in self.columns:
             self.extremes[column] = alg_modes.count_extremes(self.data[column].to_numpy())
             self.etalon_extremes[column] = alg_modes.count_extremes(self.etalon_data[column].to_numpy())
+            
+            
+    def find_wagging(self) -> None:
+        for column in self.columns:
+            extremes = []
+            for mode in self.etalon_modes[column]:
+                temp = np.array(emd.sift.get_padded_extrema(mode))
+                if len(temp.shape) != 2:
+                    break
+                extremes.append(temp.T[np.argmax(temp[1, :], axis=0)])
+            extremes = np.array(extremes)
+            index = int(extremes[np.argmax(extremes.T[1, :], axis=0)][0])
+            self.wagging[column] = self.data.iloc[max(index-10, 0):min(index+10, self.data.shape[1])]
+
+                
