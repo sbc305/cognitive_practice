@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import emd
 from scipy.signal import correlate
 from . import alg_modes
 
@@ -16,7 +17,7 @@ class ProcessingAlgorithm():
         self.extremes = dict()
         self.etalon_extremes = dict()
         self.set_EMD()
-        self.set_exteme_count()
+        self.set_extemes()
         
         
     def compare_mode_with_etalon(self, column: str) -> np.array: 
@@ -49,7 +50,7 @@ class ProcessingAlgorithm():
                 self.etalon_modes[column] = (etalon_EMDs[:, self.modes]).T
                 
                 
-    def set_exteme_count(self) -> None:
+    def set_extemes(self) -> None:
         for column in self.columns:
             self.extremes[column] = alg_modes.count_extremes(self.data[column].to_numpy())
             self.etalon_extremes[column] = alg_modes.count_extremes(self.etalon_data[column].to_numpy())
