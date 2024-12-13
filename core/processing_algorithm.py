@@ -61,7 +61,7 @@ class ProcessingAlgorithm():
     def find_wagging(self) -> None:
         for column in self.columns:
             extremes = []
-            for mode in self.etalon_modes[column]:
+            for mode in self.current_modes[column]:
                 temp = np.array(emd.sift.get_padded_extrema(mode))
                 if len(temp.shape) != 2:
                     break
