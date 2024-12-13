@@ -1,6 +1,6 @@
 from pydantic import BaseModel, model_validator, Field
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+
 
 class BaseConfigModel(BaseModel):
     class Config:
@@ -12,7 +12,8 @@ class IDData(BaseConfigModel): # модель для предоставлени�
 
 
 class DataSourceModel(BaseConfigModel): # модель для способа поиска данных: по таймстемпам или по ID
-    file_id: Optional[int] = Field(default = None, validate_default = True) # ID файла
+    device_id: str # ID устройства
+    file_id: Optional[int] = Field(default = None, validate_default = True) # ID файла - только для изначального примера!
     start_time: Optional[str] = Field(default = None, validate_default = True) # начальный таймстемп
     finish_time: Optional[str] = Field(default = None, validate_default = True) # конечный таймстемп
 
@@ -31,8 +32,8 @@ class DataSourceModel(BaseConfigModel): # модель для способа п�
         return data
 
 class AlgoSetup(BaseConfigModel): # модель для запуска алгоритма
-    source_info: DataSourceModel # передаются таймстемпы или файл
-    device_id: str # ID ТС
+    source_info: DataSourceModel # передаются таймстемпы или файл + ID устройства
+    # device_id: str # ID ТС
     algo_id: int # ID алгоритма, которым хотим считать
     valued_by: List[str] # параметры, по которым идёт оценка
     limit: float # лимит в алгоритме
@@ -40,7 +41,12 @@ class AlgoSetup(BaseConfigModel): # модель для запуска алго�
 
 class AlgoAnswer(BaseConfigModel):
     answer: str # ответ алгоритма
-    artefacts: Dict[str, Any] # артефакты работы алгоритма
+    columns: List[str] # список колонок для оценки
+    etalon_modes:Dict[str, List[List[float]]] # эталонные моды
+    current_modes:Dict[str, List[List[float]]] # моды на текущих данных
+    extremes: Dict[str, int] # количество экстремумов на текущих данных
+    etalon_extremes: Dict[str, int] # количество экстремумов на эталонном наборе
+    modes: List[str] # моды
 
 class Record(BaseConfigModel):
     algo_info: AlgoSetup # информация об алгоритме, которым производился обсчёт

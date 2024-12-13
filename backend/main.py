@@ -19,11 +19,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-dm = DataManager("data/data.csv")
 
 @app.post("/data/")
 async def find(source_info: models.DataSourceModel):
     pass_data = source_info.model_dump(exclude_none = True)
+    dm = ''
+    if (pass_data["device_id"] == "test"):
+        dm = DataManager("data/data.csv")
+    else:
+        dm = DataManager(f"data/input_samples/{pass_data.device_id}.csv")
     if ('file_id' in pass_data):
         id = pass_data['file_id']
         return dm.find_data_by_id(id).to_dict(orient = "records")
@@ -33,19 +37,28 @@ async def find(source_info: models.DataSourceModel):
         return dm.find_data(start_ts, finish_ts).to_dict(orient = "records")
 
 
+# @app.post("/algo/")
 @app.post("/algo/", response_model = models.AlgoAnswer)
 async def algo(pass_data: models.AlgoSetup) -> models.AlgoAnswer:
+# async def algo(pass_data: models.AlgoSetup):
     request_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     start = "not provided"
     finish = "not provided"
     info_data = pass_data.source_info.model_dump(exclude_none = True)
-    result = ""
-    if 'file_id' in info_data:
-        result = ProcessingAlgorithm(dm.find_data_by_id(info_data["file_id"]), pass_data.valued_by).calculate()
+    proc_alg = ""
+    if (info_data["device_id"] == "test"):
+        dm = DataManager("data/data.csv")
+        if 'file_id' in info_data:
+            proc_alg = ProcessingAlgorithm(data = dm.find_data_by_id(info_data["file_id"]), etalon_data = dm.data)
+        else:
+            proc_alg = ProcessingAlgorithm(data = dm.find_data(info_data['start_time'], info_data['finish_time']), etalon_data = dm.find_data_by_id(id = 0), columns = pass_data.valued_by)
     else:
-        result = ProcessingAlgorithm(dm.find_data(info_data['start_time'], info_data['finish_time']), pass_data.valued_by).calculate()
+        dm = DataManager(f"data/input_samples/{info_data.device_id}.csv")
+        proc_alg = proc_alg = ProcessingAlgorithm(data = dm.find_data(info_data['start_time'], info_data['finish_time']), etalon_data = dm.data, columns = pass_data.valued_by)
     start_time = timeit.default_timer()
-    algo_answer = models.AlgoAnswer(answer = result, artefacts = {})
+    etalon_modes_conv = {key: value.tolist() for key, value in proc_alg.etalon_modes.items()}
+    current_modes_conv = {key: value.tolist() for key, value in proc_alg.current_modes.items()}
+    algo_answer = models.AlgoAnswer(answer = proc_alg.calculate(), columns = proc_alg.columns, etalon_modes = etalon_modes_conv, current_modes = current_modes_conv, extremes = proc_alg.extremes, etalon_extremes = proc_alg.etalon_extremes, modes = proc_alg.modes)
     finish_time = timeit.default_timer()
     result_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     count_time = f"{(finish_time - start_time) * 1000:.2} ms"
@@ -86,3 +99,4 @@ async def validation_exception_handler(request, exc):
             ]
         }
     )
+
