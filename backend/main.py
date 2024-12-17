@@ -9,7 +9,6 @@ import os
 import json
 from .manager import DataManager
 from . import models
-import os
 
 app = FastAPI() 
 origins = ["*"]
@@ -90,6 +89,15 @@ async def logs():
             return data   
     else:
         raise HTTPException(status_code=404, detail="No logs for now!")
+
+@app.post("/files_info")
+async def return_info():
+    folder_name = "data/input_samples"
+    os.chdir(folder_name)
+    files = os.listdir()
+    names = [os.path.splitext(f)[0] for f in files if os.path.isfile(f)]
+    return names
+
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
