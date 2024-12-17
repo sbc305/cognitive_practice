@@ -42,15 +42,17 @@ class AlgoSetup(BaseConfigModel): # модель для запуска алго�
 class AlgoAnswer(BaseConfigModel):
     answer: str # ответ алгоритма
     columns: List[str] # список колонок для оценки
-    etalon_modes:Dict[str, List[List[float]]] # эталонные моды
-    current_modes:Dict[str, List[List[float]]] # моды на текущих данных
+    # etalon_modes:Dict[str, List[List[float]]] # эталонные моды
+    # current_modes:Dict[str, List[List[float]]] # моды на текущих данных
     extremes: Dict[str, int] # количество экстремумов на текущих данных
     etalon_extremes: Dict[str, int] # количество экстремумов на эталонном наборе
     modes: List[str] # моды
+    modes_wagging: Dict[str, List[List[float]]] # интересующие промежутки с модами
+    wagging: Dict[str, Any] # промежуток на рисунке с виляниями
 
 class Record(BaseConfigModel):
     algo_info: AlgoSetup # информация об алгоритме, которым производился обсчёт
     arrival_time: str # время прихода задачи на обработку
     proc_time: str # длительность работы алгоритма 
     answer_time: str # время получения ответа
-    result: AlgoAnswer # результат работы алгоритма
+    result: AlgoAnswer # результат работы алгоритма"
