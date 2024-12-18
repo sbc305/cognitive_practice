@@ -6,12 +6,15 @@
 * список с названиями столбцов,по которым ведётся сравнение
 
 Входные данные, 0 - эталонный проезд, 1 - текущий
-![](./images/inout.png "")
+![](./images/input.png "")
 ### Моды
 После инициализации каждый указанный столбец текущего и эталонного проездов раскладывается на [эмпирические моды](https://ru.ruwiki.ru/wiki/Empirical_Mode_Decomposition) с помощью метода [emd.sift.sift](https://emd.readthedocs.io/en/stable/stubs/emd.sift.sift.html). Считается количество экстремумов для каждого указанного столбца с помощью метода [emd.sift.get_padded_extrema](https://emd.readthedocs.io/en/stable/stubs/emd.sift.get_padded_extrema.html).  
 
-Моды
-![](./images/modes.png "")
+Эталонные моды
+![](./images/etalon_modes.png "")
+Моды текущего проезда
+![](./images/current_modes.png "")
+
 ### Сравнение
 Все получееные моды нормируются на свою энергию: $E= \int_{0}^{T} s^2(t)dt $.   
 Полученные моды для текущего проезда сравниваются с эталонным проездом [функцией корреляции](https://ru.ruwiki.ru/wiki/Автокорреляционная_функция) 
