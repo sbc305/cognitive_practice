@@ -49,7 +49,7 @@ async def algo(pass_data: models.AlgoSetup) -> models.AlgoAnswer:
     dm_example = DataManager("data/data.csv")
     if (info_data["device_id"] == "tractordroid-23080159" or info_data["device_id"] == "test"):
         if 'file_id' in info_data:
-            proc_alg = ProcessingAlgorithm(data = dm_example.find_data_by_id(info_data["file_id"]), etalon_data = dm_example.data)
+            proc_alg = ProcessingAlgorithm(data = dm_example.find_data_by_id(info_data["file_id"]), etalon_data = dm_example.find_data_by_id(id = 1))
         else:
             proc_alg = ProcessingAlgorithm(data = dm_example.find_data(info_data['start_time'], info_data['finish_time']), etalon_data = dm_example.find_data_by_id(id = 1), columns = pass_data.valued_by)
     else:
