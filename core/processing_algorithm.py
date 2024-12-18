@@ -27,8 +27,12 @@ class ProcessingAlgorithm():
         # averaging correlation maxima across all modes
         energy_etalon = np.sum(self.etalon_modes[column] ** 2, axis=1)
         energy_current = np.sum(self.current_modes[column] ** 2, axis=1)
-        correlation = correlate(self.etalon_modes[column].T / energy_etalon, 
-                                self.current_modes[column].T / energy_current)
+        correlation = []
+        for i in range(min(self.etalon_modes[column].T.shape[1], self.current_modes[column].T.shape[1])):
+            correlation.append(correlate(self.etalon_modes[column].T[:, i] / energy_etalon[i],
+                                         self.current_modes[column].T[:, i] / energy_current[i]))
+
+        correlation = np.array(correlation)
         return np.mean(np.max(np.abs(correlation), axis=0))
     
     
