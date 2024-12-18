@@ -27,7 +27,9 @@ async def find(source_info: models.DataSourceModel):
     if (pass_data["device_id"] == "tractordroid-23080159" or pass_data["device_id"] == "test"):
         dm = DataManager("data/data.csv")
     else:
-        dm = DataManager(f"data/input_samples/{pass_data.device_id}.csv")
+        if not os.path.exists(f"data/input_samples/{pass_data['device_id']}.csv"):
+            raise HTTPException(status_code=404, detail="File not found")
+        dm = DataManager(f"data/input_samples/{pass_data['device_id']}.csv")
     if ('file_id' in pass_data):
         id = pass_data['file_id']
         return dm.find_data_by_id(id).to_dict(orient = "records")
@@ -51,8 +53,10 @@ async def algo(pass_data: models.AlgoSetup) -> models.AlgoAnswer:
         else:
             proc_alg = ProcessingAlgorithm(data = dm_example.find_data(info_data['start_time'], info_data['finish_time']), etalon_data = dm_example.find_data_by_id(id = 1), columns = pass_data.valued_by)
     else:
-        dm = DataManager(f"data/input_samples/{info_data.device_id}.csv")
-        proc_alg = proc_alg = ProcessingAlgorithm(data = dm.find_data(info_data['start_time'], info_data['finish_time']), etalon_data = dm_example.data, columns = pass_data.valued_by)
+        if not os.path.exists(f"data/input_samples/{info_data['device_id']}.csv"):
+            raise HTTPException(status_code=404, detail="File not found")
+        dm = DataManager(f"data/input_samples/{info_data['device_id']}.csv")
+        proc_alg = proc_alg = ProcessingAlgorithm(data = dm.find_data(info_data['start_time'], info_data['finish_time']), etalon_data = dm_example.find_data_by_id(id = 1), columns = pass_data.valued_by)
     start_time = timeit.default_timer()
     etalon_modes_conv = {key: value.tolist() for key, value in proc_alg.etalon_modes.items()}
     current_modes_conv = {key: value.tolist() for key, value in proc_alg.current_modes.items()}
