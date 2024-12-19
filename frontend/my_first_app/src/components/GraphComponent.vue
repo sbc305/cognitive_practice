@@ -41,8 +41,14 @@
     <!-- Сообщение о загрузке -->
     <div v-if="isLoading" style="color: blue;">Обработка данных, пожалуйста подождите...</div>
 
-    <!-- Отображаем график -->
-    <div id="myDiv" style="width: 100%; height: 400px;" v-if="isGraphView"></div>
+    <!-- Отображаем графики -->
+    <div class="graph-container">
+      <!-- График для данных X и Y -->
+      <div id="myDiv" class="graph" v-if="isGraphView"></div>
+      
+      <!-- График для алгоритма (первоначально пустой) -->
+      <div id="algoDiv" class="graph" v-if="isGraphView"></div>
+    </div>
 
     <!-- Выбор параметров для расчета и лимита -->
     <div v-if="isGraphView && graphBuilt">
@@ -52,6 +58,7 @@
       <label><input type="checkbox" v-model="selectedParams.steer_fb"> steer_fb</label><br />
       <h4>Выберите лимит:</h4>
       <input type="number" v-model.number="limitValue" min="-1" placeholder="Введите лимит"/>
+      
       <!-- Сообщение о расчете -->
       <button @click="calculateAlgo">Сделать расчет</button>
 
@@ -81,7 +88,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="point in dataPoints" :key="point.x">
+          <!-- Проверяем наличие данных перед отображением -->
+          <tr v-for="point in dataPoints || []" :key="point.x">
             <td>{{ point.x }}</td>
             <td>{{ point.y }}</td>
           </tr>
@@ -112,9 +120,9 @@ export default {
       traceNumber: null,
       fileName: '',
       fileNameError: '',
+      
+      // Инициализация массивов
       dataPoints: [],
-      isLoading: false,
-      graphTitle: '',
       
       selectedParams: {
         cte: false,
@@ -126,14 +134,15 @@ export default {
       
       graphBuilt: false,
       
-      // Новое свойство для хранения сообщения о вилянии, для хранения данных мод, для хранения названий столбцов и для отображения сообщения о расчете
       vibrationMessage: '',
       
-      etalonModesData: {},
-
       columns: [],
-
-      isCalculating: false 
+      
+      isCalculating: false,
+      
+       // Инициализация переменных
+       algoData: [],
+       isLoading: false 
     };
   },
   
@@ -178,7 +187,7 @@ export default {
          "finish_time": this.finishTime,
          "device_id": this.fileName
        };
-
+       console.log('Отправляемые данные:', JSON.stringify(user));
        this.isLoading = true;
 
        fetch(url, {
@@ -200,9 +209,11 @@ export default {
        .then(data => {
          this.dataPoints = data;
          this.isGraphView = true;
-         this.graphTitle = `График с ${this.startTime} по ${this.finishTime}`;
          this.renderGraph(data);
          this.graphBuilt = true;
+
+         // Инициализация пустого графика для алгоритма
+         this.initEmptyAlgoGraph();
        })
        .catch(error => {
          console.error('Ошибка при получении JSON:', error);
@@ -212,11 +223,11 @@ export default {
          this.isLoading = false;
        });
      },
-     
+         
      plotGraphById() {
        const url = 'http://localhost:8000/data/';
        
-       if (this.traceNumber < 0 || this.traceNumber > 11) {
+       if (this.traceNumber === null || this.traceNumber < 0 || this.traceNumber > 11) {
          this.errorMessage = 'Такой трассы нет. Введите номер от 0 до 11.';
          this.dataPoints = [];
          return;
@@ -254,9 +265,11 @@ export default {
         .then(data => {
           this.dataPoints = data;
           this.isGraphView = true; 
-          this.graphTitle = `График ID ${this.traceNumber}`;
           this.renderGraph(data);
           this.graphBuilt = true;
+
+          // Инициализация пустого графика для алгоритма
+          this.initEmptyAlgoGraph();
         })
         .catch(error => {
           console.error('Ошибка при получении JSON:', error);
@@ -268,10 +281,8 @@ export default {
      },
      
      renderGraph(data) {
-       // Проверяем наличие данных перед построением графика
        if (!data || data.length === 0) return;
 
-       // Используем nextTick для гарантии обновления DOM
        const x = data.map(point => point.x);
        const y = data.map(point => point.y);
 
@@ -284,9 +295,12 @@ export default {
        };
 
        const layout = {
-         title: this.graphTitle,
+         title: `График`,
          xaxis: { title: 'X координаты' },
-         yaxis: { title: 'Y координаты' }
+         yaxis: { title: 'Y координаты' },
+         autosize: false,
+         width: 400,
+         height: 400
        };
 
        const graphDiv = document.getElementById('myDiv');
@@ -296,7 +310,42 @@ export default {
          console.error("Элемент с id 'myDiv' не найден.");
        }
      },
-     
+
+     initEmptyAlgoGraph() {
+       // Инициализируем пустой график для алгоритма
+       const emptyTrace = [{
+           x: [],
+           y: [],
+           mode: 'lines+markers',
+           type: 'scatter',
+           name: 'Алгоритм'
+       }];
+
+       const layoutTracks = { 
+           title: 'График алгоритма', 
+           xaxis: { title:'номер измерения' }, 
+           yaxis: { title:`амплитуда` },
+           autosize: false,
+           width: 400,
+           height: 400
+       };
+       
+       Plotly.newPlot('algoDiv', emptyTrace, layoutTracks); // Рисуем пустой график
+     },
+
+     renderAlgoGraph(tracesToPlot) {
+       const layoutTracks = { 
+           title: 'График мод', 
+           xaxis: { title:'номер измерения' }, 
+           yaxis: { title:`амплитуда` },
+           autosize: false,
+           width: 400,
+           height: 400
+       };
+       
+       Plotly.newPlot('algoDiv', tracesToPlot, layoutTracks); // Рисуем график с несколькими трассами
+     },
+
      calculateAlgo() {
        const url = 'http://localhost:8000/algo/';
        
@@ -311,11 +360,16 @@ export default {
        }
 
        if (this.limitValue <= 0) { 
+           this.errorMessage = 'Лимит должен быть больше нуля.';
            return; 
        }
 
-       const userData = {};
-       userData.source_info = {};
+       const userData = {
+           source_info : {},
+           algo_id : 1, // Фиксированное значение алгоритма
+           valued_by : valuedBy, // Параметры, выбранные пользователем
+           limit : this.limitValue // Лимит
+       };
 
        if (this.isTimeInput) { // Если запрос по времени
            userData.source_info.device_id = this.fileName; // Указываем device_id
@@ -325,10 +379,6 @@ export default {
            userData.source_info.device_id = this.fileName; // Указываем device_id
            userData.source_info.file_id = this.traceNumber; // Номер трассы
        }
-
-       userData.algo_id = 1; // Фиксированное значение алгоритма
-       userData.valued_by = valuedBy; // Параметры, выбранные пользователем
-       userData.limit = this.limitValue; // Лимит
 
        console.log('Отправляемые данные в POST-запросе:', JSON.stringify(userData)); 
 
@@ -344,7 +394,7 @@ export default {
        })
        .then(response => {
            if (!response.ok) {
-               throw new Error('Ошибка при обработке запроса.');
+               throw new Error(`Ошибка ${response.status}: ${response.statusText}`);
            }
            return response.json();
        })
@@ -359,57 +409,65 @@ export default {
                // Устанавливаем сообщение о вилянии
                this.vibrationMessage = data.answer;
 
-               // Рисуем график с трассами из etalon_modes
-               if (data.etalon_modes && data.etalon_modes.cte) {
+               // Рисуем графики для всех выбранных параметров
+               const tracesToPlot = [];
 
-                   const tracesToPlot = data.etalon_modes.cte.map((track, index) => ({
-                       x: track.map((_, i) => i), // Генерируем X координаты как индексы точек
-                       y: track, // Y координаты из данных трассы
-                       mode: 'lines+markers',
-                       type: 'scatter',
-                       name: `мода ${index + 1}`, 
-                   }));
+               valuedBy.forEach(param => {
+                   if (data.modes_wagging && data.modes_wagging[param]) {
+                       const tracks = data.modes_wagging[param];
+                       tracks.forEach((track, index) => {
+                           tracesToPlot.push({
+                               x : track.map((_, i) => i), // Генерируем X координаты как индексы точек
+                               y : track, // Y координаты из данных трассы
+                               mode : 'lines+markers',
+                               type : 'scatter',
+                               name : `${param} мода ${index + 1}`, 
+                           });
+                       });
+                   }
+               });
 
-                   const layoutTracks = { 
-                       title: 'График мод', 
-                       xaxis: { title:'номер измерения' }, 
-                       yaxis: { title:`${this.columns.join(', ')}` }
-                   };
-                   Plotly.newPlot('myDiv', tracesToPlot, layoutTracks); // Рисуем график с несколькими трассами
-               }
+               // Вызов функции для построения графика алгоритма с несколькими трассами
+               this.renderAlgoGraph(tracesToPlot);
            } else {
                alert('Ответ не содержит параметра "answer".');
                this.vibrationMessage = ''; // Сбрасываем сообщение, если его нет
            }
            
            console.log('Столбцы:', data.columns);
-           console.log('Экстремумы:', data.extremes);
-           console.log('Эталонные экстремумы:', data.etalon_extremes);
            
-       })
-       .catch(error => console.error('Ошибка при отправке данных:', error))
-       .finally(() => {
-           // Сбрасываем состояние загрузки после завершения расчета
-           this.isCalculating = false;
-       });
-     },
+   })
+   .catch(error => console.error('Ошибка при отправке данных:', error))
+   .finally(() => {
+   // Сбрасываем состояние загрузки после завершения расчета
+   this.isCalculating = false;
+   });
+   },
 
      toggleView() {
-       // Переключаем режим отображения
-       this.isGraphView = !this.isGraphView;
-
+     // Переключаем режим отображения
+     this.isGraphView = !this.isGraphView;
      },
      
      toggleInputMode() {
-       // Переключаем режим ввода
-       this.isTimeInput = !this.isTimeInput; 
-       
+     // Переключаем режим ввода
+     this.isTimeInput = !this.isTimeInput; 
      }
    }
 };
 </script>
 
 <style scoped>
-input[type='number'] { width: 200px; }
-input[type='checkbox'] { margin-right: 10px; }
+.graph-container {
+  display:flex;
+  justify-content:center;
+}
+
+.graph{
+  width :48%; /* Половина ширины страницы */
+  height :400px; /* Высота графика */
+}
+
+input[type='number'] { width :200px;}
+input[type='checkbox'] { margin-right :10px;}
 </style>
