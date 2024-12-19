@@ -81,7 +81,7 @@ class ProcessingAlgorithm():
                                           [column]
                                           [i]
                                           [max(int(index)-10, 0):min(int(index)+10, self.current_modes[column][i].shape[0])]
-                                          for i, index in 
-                                          zip(range(self.current_modes[column].shape[0]), extremes[:, 0])]
+                                          for i in
+                                          range(self.current_modes[column].shape[0])]
 
                 
