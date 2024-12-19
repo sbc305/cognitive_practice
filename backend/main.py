@@ -100,6 +100,8 @@ async def return_info():
     os.chdir(folder_name)
     files = os.listdir()
     names = [os.path.splitext(f)[0] for f in files if os.path.isfile(f)]
+    os.chdir('..')
+    os.chdir('..')
     return names
 
 
