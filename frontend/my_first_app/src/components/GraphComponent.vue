@@ -46,8 +46,8 @@
       <!-- График для данных X и Y -->
       <div id="myDiv" class="graph" v-if="isGraphView"></div>
       
-      <!-- График для алгоритма (первоначально пустой) -->
-      <div id="algoDiv" class="graph" v-if="isGraphView"></div>
+      <div ref="chartsContainer" class="charts-container"></div>
+
     </div>
 
     <!-- Выбор параметров для расчета и лимита -->
@@ -55,7 +55,6 @@
       <h3>Выберите параметры для расчета:</h3>
       <label><input type="checkbox" v-model="selectedParams.cte"> cte</label><br />
       <label><input type="checkbox" v-model="selectedParams.yaw_rate"> yaw_rate</label><br />
-      <label><input type="checkbox" v-model="selectedParams.steer_fb"> steer_fb</label><br />
       <h4>Выберите лимит:</h4>
       <input type="number" v-model.number="limitValue" min="-1" placeholder="Введите лимит"/>
       
@@ -126,8 +125,7 @@ export default {
       
       selectedParams: {
         cte: false,
-        yaw_rate: false,
-        steer_fb: false
+        yaw_rate: false
       },
       
       limitValue: 0,
@@ -212,8 +210,6 @@ export default {
          this.renderGraph(data);
          this.graphBuilt = true;
 
-         // Инициализация пустого графика для алгоритма
-         this.initEmptyAlgoGraph();
        })
        .catch(error => {
          console.error('Ошибка при получении JSON:', error);
@@ -225,6 +221,8 @@ export default {
      },
          
      plotGraphById() {
+      const container = this.$refs.chartsContainer;
+      container.innerHTML = "";
        const url = 'http://localhost:8000/data/';
        
        if (this.traceNumber === null || this.traceNumber < 0 || this.traceNumber > 11) {
@@ -267,9 +265,6 @@ export default {
           this.isGraphView = true; 
           this.renderGraph(data);
           this.graphBuilt = true;
-
-          // Инициализация пустого графика для алгоритма
-          this.initEmptyAlgoGraph();
         })
         .catch(error => {
           console.error('Ошибка при получении JSON:', error);
@@ -311,28 +306,6 @@ export default {
        }
      },
 
-     initEmptyAlgoGraph() {
-       // Инициализируем пустой график для алгоритма
-       const emptyTrace = [{
-           x: [],
-           y: [],
-           mode: 'lines+markers',
-           type: 'scatter',
-           name: 'Алгоритм'
-       }];
-
-       const layoutTracks = { 
-           title: 'График алгоритма', 
-           xaxis: { title:'номер измерения' }, 
-           yaxis: { title:`амплитуда` },
-           autosize: false,
-           width: 400,
-           height: 400
-       };
-       
-       Plotly.newPlot('algoDiv', emptyTrace, layoutTracks); // Рисуем пустой график
-     },
-
      renderAlgoGraph(tracesToPlot) {
        const layoutTracks = { 
            title: 'График мод', 
@@ -342,9 +315,18 @@ export default {
            width: 400,
            height: 400
        };
-       
-       Plotly.newPlot('algoDiv', tracesToPlot, layoutTracks); // Рисуем график с несколькими трассами
-     },
+        const container = this.$refs.chartsContainer;
+
+        // Создаем элемент div для графика
+        const chartDiv = document.createElement("div");
+        chartDiv.className = "chart"; // Добавляем CSS-класс для стилей
+        container.appendChild(chartDiv);
+
+        // Рендеринг графика с помощью Plotly
+        Plotly.newPlot(chartDiv, tracesToPlot, layoutTracks);
+       // Plotly.newPlot('algoDiv', tracesToPlot, layoutTracks); // Рисуем график с несколькими трассами
+      },
+     
 
      calculateAlgo() {
        const url = 'http://localhost:8000/algo/';
@@ -352,7 +334,6 @@ export default {
        const valuedBy = [];
        if (this.selectedParams.cte) valuedBy.push("cte");
        if (this.selectedParams.yaw_rate) valuedBy.push("yaw_rate");
-       if (this.selectedParams.steer_fb) valuedBy.push("steer_fb");
 
        if (valuedBy.length === 0) {
            this.errorMessage = 'Не выбраны параметры для расчета.';
@@ -406,29 +387,31 @@ export default {
 
            // Проверяем наличие поля "answer"
            if (data.answer) {
-               // Устанавливаем сообщение о вилянии
-               this.vibrationMessage = data.answer;
+            // Устанавливаем сообщение о вилянии
+            this.vibrationMessage = data.answer;
 
-               // Рисуем графики для всех выбранных параметров
-               const tracesToPlot = [];
+            // Рисуем графики для всех выбранных параметров
+            const container = this.$refs.chartsContainer;
+            container.innerHTML = "";
 
-               valuedBy.forEach(param => {
-                   if (data.modes_wagging && data.modes_wagging[param]) {
-                       const tracks = data.modes_wagging[param];
-                       tracks.forEach((track, index) => {
-                           tracesToPlot.push({
-                               x : track.map((_, i) => i), // Генерируем X координаты как индексы точек
-                               y : track, // Y координаты из данных трассы
-                               mode : 'lines+markers',
-                               type : 'scatter',
-                               name : `${param} мода ${index + 1}`, 
-                           });
-                       });
-                   }
-               });
+            valuedBy.forEach(param => {
+              if (data.modes_wagging && data.modes_wagging[param]) {
+                const tracesToPlot = [];
+                const tracks = data.modes_wagging[param];
+                tracks.forEach((track, index) => {
+                  tracesToPlot.push({
+                     x : track.map((_, i) => i), // Генерируем X координаты как индексы точек
+                     y : track, // Y координаты из данных трассы
+                     mode : 'lines+markers',
+                     type : 'scatter',
+                     name : `${param} мода ${index + 1}`, 
+                  });
+                });
+                // Вызов функции для построения графика алгоритма с несколькими трассами
+                this.renderAlgoGraph(tracesToPlot);
+              }
+            });
 
-               // Вызов функции для построения графика алгоритма с несколькими трассами
-               this.renderAlgoGraph(tracesToPlot);
            } else {
                alert('Ответ не содержит параметра "answer".');
                this.vibrationMessage = ''; // Сбрасываем сообщение, если его нет
@@ -463,11 +446,25 @@ export default {
   justify-content:center;
 }
 
+.charts-container {
+  display: flex;
+  flex-wrap: wrap; /* Перенос графиков на новую строку, если не помещаются */
+  gap: 5px; /* Отступы между графиками */
+  justify-content: center; /* Центрирование графиков по горизонтали */
+}
+.chart {
+  width: 30%; /* Графики занимают 45% ширины, чтобы поместилось два в строку */
+  height: 400px; /* Фиксированная высота графика */
+  border: 1px solid #ccc; /* Добавляем рамку для наглядности */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Тень для красоты */
+}
+
 .graph{
-  width :48%; /* Половина ширины страницы */
+  width :30%;
   height :400px; /* Высота графика */
 }
 
 input[type='number'] { width :200px;}
 input[type='checkbox'] { margin-right :10px;}
+
 </style>
